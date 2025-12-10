@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BotMessageSquare, FileText, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from '@/components/ui/textarea';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
+import { api } from '@/lib/api-client';
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
   <Card className="text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-in-out bg-card/50 backdrop-blur-sm">
     <CardHeader>
@@ -23,15 +24,34 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; titl
 export function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!noteText.trim()) {
       toast.error('Please paste a clinical note to analyze.');
       return;
     }
-    // In a real app, you'd likely POST this to a backend.
-    // For this demo, we pass it via route state to the workspace.
-    navigate('/coding-workspace', { state: { clinicalNote: noteText } });
+    setIsAnalyzing(true);
+    try {
+      // This call "warms up" the backend and creates a new job.
+      // The dashboard will then reflect this new job.
+      await api('/api/ingest-note', {
+        method: 'POST',
+        body: JSON.stringify({ clinical_note: noteText }),
+      });
+      toast.success("Note ingested successfully!", {
+        description: "Redirecting to the dashboard to see the results."
+      });
+      // Navigate to the dashboard to see the new job and overall status
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error("Failed to ingest note.", {
+        description: error instanceof Error ? error.message : "An unknown error occurred."
+      });
+    } finally {
+      setIsAnalyzing(false);
+      setIsModalOpen(false);
+    }
   };
   return (
     <div className="min-h-screen w-full bg-background text-foreground relative overflow-x-hidden">
@@ -50,7 +70,7 @@ export function HomePage() {
             <p className="max-w-3xl mx-auto text-lg text-muted-foreground text-pretty">
               Leverage our SOC2+ compliant AI to streamline clinical coding, automate nphies claim submissions, and enhance revenue cycle integrity with real-time CDI nudges.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 size="lg"
                 onClick={() => setIsModalOpen(true)}
@@ -58,6 +78,9 @@ export function HomePage() {
               >
                 Ingest Note & Start Demo
                 <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button size="lg" variant="outline" asChild className="px-8 py-6 text-lg font-semibold">
+                <Link to="/dashboard">View Dashboard</Link>
               </Button>
             </div>
           </div>
@@ -121,12 +144,13 @@ export function HomePage() {
               className="min-h-[200px] text-base"
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
+              disabled={isAnalyzing}
             />
           </div>
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" onClick={handleAnalyze} className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white">
-              Analyze Note
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isAnalyzing}>Cancel</Button>
+            <Button type="submit" onClick={handleAnalyze} className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white" disabled={isAnalyzing}>
+              {isAnalyzing ? 'Analyzing...' : 'Analyze Note'}
             </Button>
           </DialogFooter>
         </DialogContent>

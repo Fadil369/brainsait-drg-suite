@@ -6,48 +6,28 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, FileText, Lightbulb, Scale, Settings } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FilePlus2, AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
-import type { Claim, CodingJob, Nudge } from '@shared/types';
-import { useAuth } from '@/hooks/use-auth';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { motion } from 'framer-motion';
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-  },
-};
-const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string }) => {
-  const cardContent = (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-8 w-1/2 animate-pulse" />
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-      </CardContent>
-    </Card>
-  );
-  return linkTo ? <Link to={linkTo} className="focus:outline-none focus:ring-2 focus:ring-ring rounded-lg">{cardContent}</Link> : cardContent;
-};
+import type { Claim, CodingJob } from '@shared/types';
+import { formatDistanceToNow } from 'date-fns';
+const StatCard = ({ title, value, icon, isLoading }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean }) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      {icon}
+    </CardHeader>
+    <CardContent>
+      {isLoading ? (
+        <Skeleton className="h-8 w-1/2" />
+      ) : (
+        <div className="text-2xl font-bold">{value}</div>
+      )}
+    </CardContent>
+  </Card>
+);
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
     case 'FC_3': return 'default';
@@ -59,7 +39,7 @@ const getStatusVariant = (status: Claim['status']) => {
   }
 };
 export function Dashboard() {
-  const user = useAuth(s => s.user);
+  const navigate = useNavigate();
   const { data: claimsData, isLoading: isLoadingClaims, error: claimsError } = useQuery({
     queryKey: ['claims', { limit: 5 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 5 } }),
@@ -68,36 +48,29 @@ export function Dashboard() {
     queryKey: ['coding-jobs', { limit: 5 }],
     queryFn: () => api<{ items: CodingJob[] }>('/api/coding-jobs', { params: { limit: 5 } }),
   });
-  const { data: nudgesData, isLoading: isLoadingNudges, error: nudgesError } = useQuery({
-    queryKey: ['nudges'],
-    queryFn: () => api<{ items: Nudge[] }>('/api/nudges'),
-  });
   if (claimsError) toast.error('Failed to load claims data.');
   if (jobsError) toast.error('Failed to load coding jobs.');
-  if (nudgesError) toast.error('Failed to load CDI nudges.');
-  const totalClaims = claimsData?.items?.length ?? 0;
-  const pendingJobs = jobsData?.items?.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
-  const activeNudges = nudgesData?.items?.filter(n => n.status === 'active').length ?? 0;
+  const totalClaims = claimsData?.items.length ?? 0;
+  const pendingJobs = jobsData?.items.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
+  const rejectedClaims = claimsData?.items.filter(c => c.status === 'REJECTED').length ?? 0;
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <Breadcrumbs />
-        <motion.div
-          className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div variants={itemVariants}>
-            <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
-          </motion.div>
-        </motion.div>
+    <div className="min-h-screen w-full bg-muted/40">
+      <ThemeToggle className="fixed top-4 right-4 z-50" />
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-4">
+        <h1 className="text-2xl font-bold font-display">Dashboard</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <Button asChild variant="outline"><Link to="/claims-manager">Claims Manager</Link></Button>
+          <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white" onClick={() => navigate('/')}>
+            <FilePlus2 className="mr-2 h-4 w-4" /> Ingest New Note
+          </Button>
+        </div>
+      </header>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <StatCard title="Total Claims (Recent)" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} />
+          <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} />
+          <StatCard title="Rejected Claims" value={rejectedClaims} icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} />
+        </div>
         <div className="grid gap-8 md:grid-cols-2 mt-8">
           <Card>
             <CardHeader>
@@ -105,58 +78,68 @@ export function Dashboard() {
               <CardDescription>A view of the latest claims processed by the system.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim #</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingClaims ? (
-                      Array.from({ length: 5 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-20 animate-pulse" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16 animate-pulse" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : claimsData?.items && claimsData.items.length > 0 ? (
-                      claimsData.items.map(claim => (
-                        <TableRow key={claim.id} className="transition-colors hover:bg-muted/50">
-                          <TableCell className="font-medium">{claim.claim_number}</TableCell>
-                          <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
-                          <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow><TableCell colSpan={3} className="text-center h-24">No recent claims found.</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Claim #</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingClaims ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : claimsData?.items.length ? (
+                    claimsData.items.map(claim => (
+                      <TableRow key={claim.id}>
+                        <TableCell className="font-medium">{claim.claim_number}</TableCell>
+                        <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
+                        <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow><TableCell colSpan={3} className="text-center">No recent claims found.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Quick Access</CardTitle>
-              <CardDescription>Navigate to key system modules.</CardDescription>
+              <CardTitle>Pending Coding Jobs</CardTitle>
+              <CardDescription>Encounters awaiting manual review or processing.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
-                <Button variant="outline" className="w-full justify-start" asChild><Link to="/cdi-nudges"><Lightbulb className="mr-2 h-4 w-4" /> CDI Nudges Console</Link></Button>
-                {user?.role === 'admin' && (
-                  <>
-                    <Button variant="outline" className="w-full justify-start" asChild><Link to="/audit-reconciliation"><Scale className="mr-2 h-4 w-4" /> Audit & Reconciliation</Link></Button>
-                    <Button variant="outline" className="w-full justify-start" asChild><Link to="/integration"><Settings className="mr-2 h-4 w-4" /> Integration Console</Link></Button>
-                  </>
-                )}
+            <CardContent>
+              {isLoadingJobs ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+                </div>
+              ) : jobsData?.items.length ? (
+                jobsData.items.map(job => (
+                  <div key={job.id} className="mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0">
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
+                    <div className="grid gap-1">
+                      <p className="text-sm font-medium leading-none">Encounter <span className="text-muted-foreground">{job.encounter_id}</span></p>
+                      <p className="text-sm text-muted-foreground">
+                        Phase: {job.phase} - Confidence: {(job.confidence_score * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center">No pending jobs.</p>
+              )}
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
       <Toaster richColors closeButton />
-    </AppLayout>
+    </div>
   );
 }

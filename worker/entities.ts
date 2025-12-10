@@ -2,9 +2,8 @@
  * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
  */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
+import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter } from "@shared/types";
+import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS, MOCK_PATIENTS, MOCK_CLAIMS, MOCK_CODING_JOBS, MOCK_ENCOUNTERS } from "@shared/mock-data";
 // USER ENTITY: one DO instance per user
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
@@ -12,30 +11,49 @@ export class UserEntity extends IndexedEntity<User> {
   static readonly initialState: User = { id: "", name: "" };
   static seedData = MOCK_USERS;
 }
-
 // CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
 export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
 const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
   ...c,
   messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
 }));
-
 export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
   static readonly entityName = "chat";
   static readonly indexName = "chats";
   static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
   static seedData = SEED_CHAT_BOARDS;
-
   async listMessages(): Promise<ChatMessage[]> {
     const { messages } = await this.getState();
     return messages;
   }
-
   async sendMessage(userId: string, text: string): Promise<ChatMessage> {
     const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
     await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
     return msg;
   }
 }
-
+// --- SOLVENTUM DRG SUITE ENTITIES ---
+export class PatientEntity extends IndexedEntity<Patient> {
+  static readonly entityName = "patient";
+  static readonly indexName = "patients";
+  static readonly initialState: Patient = { id: "", national_id: "", given_name: "", family_name: "" };
+  static seedData = MOCK_PATIENTS;
+}
+export class EncounterEntity extends IndexedEntity<Encounter> {
+  static readonly entityName = "encounter";
+  static readonly indexName = "encounters";
+  static readonly initialState: Encounter = { id: "", patient_id: "", encounter_type: "INPATIENT", admission_dt: "" };
+  static seedData = MOCK_ENCOUNTERS;
+}
+export class ClaimEntity extends IndexedEntity<Claim> {
+  static readonly entityName = "claim";
+  static readonly indexName = "claims";
+  static readonly initialState: Claim = { id: "", encounter_id: "", claim_number: "", status: "DRAFT", submitted_at: null, amount: 0 };
+  static seedData = MOCK_CLAIMS;
+}
+export class CodingJobEntity extends IndexedEntity<CodingJob> {
+  static readonly entityName = "coding_job";
+  static readonly indexName = "coding_jobs";
+  static readonly initialState: CodingJob = { id: "", encounter_id: "", suggested_codes: [], status: "NEEDS_REVIEW", confidence_score: 0, phase: "CAC", created_at: "" };
+  static seedData = MOCK_CODING_JOBS;
+}
