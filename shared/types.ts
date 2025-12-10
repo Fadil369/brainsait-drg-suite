@@ -32,6 +32,7 @@ export interface Encounter {
   encounter_type: 'INPATIENT' | 'OUTPATIENT' | 'ED';
   admission_dt: string; // ISO string
   clinical_note?: string;
+  provider_cr?: string;
 }
 export interface Claim {
   id: string;
