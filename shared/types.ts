@@ -82,3 +82,11 @@ export interface Payment {
     reconciled: boolean;
     received_at: string; // ISO string
 }
+export interface Analytics {
+    id: string;
+    job_id: string;
+    accuracy: number;
+    phase: 'CAC' | 'SEMI_AUTONOMOUS' | 'AUTONOMOUS';
+    phase_dist?: Record<string, number>;
+    created_at: string; // ISO string
+}
