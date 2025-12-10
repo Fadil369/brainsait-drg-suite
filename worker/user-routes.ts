@@ -76,11 +76,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.post('/api/ingest-note', async (c) => {
     const jobId = crypto.randomUUID();
     try {
+      await ensureAllSeeds(c.env);
       const body = await c.req.json();
       const clinical_note: string = body?.clinical_note;
-      const provider_cr: string | undefined = body?.provider_cr;
       const visit_complexity: string = body?.visit_complexity || 'standard';
-      const realNLP: boolean = body?.realNLP || false;
       if (!isStr(clinical_note)) {
         await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingestion_failed', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
         return bad(c, 'clinical_note is required');
@@ -102,7 +101,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
           const re = new RegExp(`\\b${syn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           if (re.test(clinical_note)) {
             if (!seenCodes.has(entry.code)) {
-              // Add random variance for realism
               const confidenceWithVariance = Math.min(0.99, entry.confidence + (Math.random() * 0.10 - 0.05));
               suggested_codes.push({ code: entry.code, desc: entry.desc, confidence: parseFloat(confidenceWithVariance.toFixed(2)) });
               seenCodes.add(entry.code);
@@ -111,17 +109,15 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
           }
         }
       }
-      // Fallback for no matches
       if (suggested_codes.length === 0) {
         suggested_codes.push({ code: 'Z00.00', desc: 'General medical examination, unspecified', confidence: 0.50 });
       }
-      const confidence_score = realNLP ? 0.99 : parseFloat((suggested_codes.reduce((acc, code) => acc + code.confidence, 0) / suggested_codes.length).toFixed(2));
+      const confidence_score = parseFloat((suggested_codes.reduce((acc, code) => acc + code.confidence, 0) / suggested_codes.length).toFixed(2));
       let phase: CodingJob['phase'] = 'CAC';
       let status: CodingJob['status'] = 'NEEDS_REVIEW';
       if (confidence_score > 0.98 && visit_complexity === 'low-complexity outpatient') {
         phase = 'AUTONOMOUS';
         status = 'SENT_TO_NPHIES';
-        await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'claim.submitted_to_nphies', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
       } else if (confidence_score > 0.90) {
         phase = 'SEMI_AUTONOMOUS';
         status = 'AUTO_DROP';
@@ -136,15 +132,28 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
         confidence_score,
         phase,
         created_at: new Date().toISOString(),
+        source_text: clinical_note, // Add source text to the job
       };
       await CodingJobEntity.create(c.env, newJob);
       await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingested', object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
+      if (status === 'SENT_TO_NPHIES') {
+        await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'claim.submitted_to_nphies', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
+      }
       return ok(c, newJob);
     } catch (err: any) {
       console.error('ingest-note error', err);
       await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingestion_failed', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
       return bad(c, 'failed to ingest note');
     }
+  });
+  // POST Accept Coding Job Suggestions
+  app.post('/api/coding-jobs/:id/accept', async (c) => {
+    const id = c.req.param('id');
+    const job = new CodingJobEntity(c.env, id);
+    if (!await job.exists()) return notFound(c);
+    await job.patch({ status: 'AUTO_DROP' });
+    await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'user:coder@hospital.sa', action: 'coding_job.accepted', object_type: 'coding_job', object_id: id, occurred_at: new Date().toISOString() });
+    return ok(c, { id, status: 'accepted' });
   });
   // GET Nudges
   app.get('/api/nudges', async (c) => {
@@ -172,15 +181,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const cursor = c.req.query('cursor');
     const page = await AuditLogEntity.list(c.env, cursor, limit);
     return ok(c, page);
-  });
-  // GET Integration Logs (filtered audit logs)
-  app.get('/api/integration-logs', async (c) => {
-    await ensureAllSeeds(c.env);
-    c.header('Cache-Control', 'public, max-age=30');
-    const { items } = await AuditLogEntity.list(c.env, null, 50);
-    const integrationActions = ['nphies.token_refreshed', 'claim.submitted_to_nphies'];
-    const filtered = items.filter(log => integrationActions.includes(log.action) || log.object_type === 'integration');
-    return ok(c, { items: filtered.slice(0, 10) });
   });
   // GET Payments
   app.get('/api/payments', async (c) => {

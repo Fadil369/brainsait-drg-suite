@@ -1,47 +1,81 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Send } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CheckCircle, XCircle, Send, ThumbsUp } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-// Mock data for demonstration purposes
-const mockSuggestedCodes = [
-  { code: 'J18.9', desc: 'Pneumonia, unspecified organism', confidence: 0.85, type: 'ICD-10' },
-  { code: 'R05', desc: 'Cough', confidence: 0.95, type: 'ICD-10' },
-  { code: 'R50.9', desc: 'Fever, unspecified', confidence: 0.98, type: 'ICD-10' },
-  { code: '139', desc: 'Pneumonia, Simple & Pleurisy Age >17 w/o CC', confidence: 0.82, type: 'APR-DRG' },
-];
+import { Toaster, toast } from 'sonner';
+import { api } from '@/lib/api-client';
+import type { CodingJob } from '@shared/types';
+import { motion, AnimatePresence } from 'framer-motion';
 const mockEncounterDetails = {
   patientName: 'Abdullah Al-Farsi',
   mrn: 'MRN789012',
   admissionDate: '2024-08-15',
   encounterType: 'Inpatient',
 };
-const defaultClinicalNote = "Patient presents with fever and cough. Chest X-ray confirms pneumonia. Vital signs stable. Plan to start antibiotics.";
 export function CodingWorkspace() {
   const location = useLocation();
-  const clinicalNote = location.state?.clinicalNote || defaultClinicalNote;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [codingJob, setCodingJob] = useState<CodingJob | null>(location.state?.codingJob || null);
+  const { data: latestJobData, isLoading: isLoadingLatestJob } = useQuery({
+    queryKey: ['coding-jobs', { limit: 1 }],
+    queryFn: () => api<{ items: CodingJob[] }>('/api/coding-jobs', { params: { limit: 1 } }),
+    enabled: !codingJob, // Only fetch if no job was passed in state
+  });
+  useEffect(() => {
+    if (!codingJob && latestJobData?.items?.[0]) {
+      setCodingJob(latestJobData.items[0]);
+    }
+  }, [latestJobData, codingJob]);
+  const acceptCodesMutation = useMutation({
+    mutationFn: (jobId: string) => api(`/api/coding-jobs/${jobId}/accept`, { method: 'POST' }),
+    onSuccess: (data, jobId) => {
+      toast.success('Codes accepted!', { description: 'Job status updated to AUTO_DROP.' });
+      setCodingJob(prev => prev ? { ...prev, status: 'AUTO_DROP' } : null);
+      queryClient.invalidateQueries({ queryKey: ['coding-jobs'] });
+    },
+    onError: (error) => {
+      toast.error('Failed to accept codes.', { description: error.message });
+    },
+  });
+  const isLoading = isLoadingLatestJob && !codingJob;
   return (
     <div className="h-screen w-screen flex flex-col bg-muted/40">
       <ThemeToggle className="fixed top-4 right-4 z-50" />
-      <header className="flex items-center justify-between p-4 border-b bg-background shadow-sm">
+      <header className="flex items-center justify-between p-4 border-b bg-background shadow-sm flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold font-display">BrainSAIT Coding Workspace</h1>
           <p className="text-sm text-muted-foreground">
             {mockEncounterDetails.patientName} (MRN: {mockEncounterDetails.mrn}) - Admitted: {mockEncounterDetails.admissionDate}
           </p>
         </div>
-        <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white shadow-md">
-          <Send className="mr-2 h-4 w-4" />
-          Submit Claim to nphies
-        </Button>
+        <div className="flex items-center gap-2">
+          {codingJob && (
+            <Button 
+              variant="outline"
+              onClick={() => acceptCodesMutation.mutate(codingJob.id)}
+              disabled={acceptCodesMutation.isPending || codingJob.status !== 'NEEDS_REVIEW'}
+            >
+              <ThumbsUp className="mr-2 h-4 w-4" />
+              {codingJob.status === 'AUTO_DROP' ? 'Codes Accepted' : 'Accept All Codes'}
+            </Button>
+          )}
+          <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white shadow-md">
+            <Send className="mr-2 h-4 w-4" />
+            Submit Claim to nphies
+          </Button>
+        </div>
       </header>
       <main className="flex-1 p-4 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-lg border">
+        <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-lg border bg-background">
           <ResizablePanel defaultSize={50}>
             <Card className="h-full flex flex-col border-0 rounded-none">
               <CardHeader>
@@ -50,7 +84,17 @@ export function CodingWorkspace() {
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden">
                 <ScrollArea className="h-full pr-4">
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">{clinicalNote}</p>
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <p className="text-base leading-relaxed whitespace-pre-wrap">
+                      {codingJob?.source_text || "No clinical note available for this job."}
+                    </p>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>
@@ -74,28 +118,51 @@ export function CodingWorkspace() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockSuggestedCodes.map((item) => (
-                        <TableRow key={item.code} className="hover:bg-muted/50">
-                          <TableCell className="font-medium">
-                            {item.code}
-                            <Badge variant="outline" className="ml-2">{item.type}</Badge>
-                          </TableCell>
-                          <TableCell>{item.desc}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant={item.confidence > 0.9 ? 'default' : 'secondary'}>
-                              {(item.confidence * 100).toFixed(0)}%
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700">
-                              <CheckCircle className="h-5 w-5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
-                              <XCircle className="h-5 w-5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      <AnimatePresence>
+                        {isLoading ? (
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto" /></TableCell>
+                              <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                            </TableRow>
+                          ))
+                        ) : codingJob?.suggested_codes?.length ? (
+                          codingJob.suggested_codes.map((item, index) => (
+                            <motion.tr
+                              key={item.code}
+                              layout
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                              className="hover:bg-muted/50"
+                            >
+                              <TableCell className="font-medium">
+                                {item.code}
+                              </TableCell>
+                              <TableCell>{item.desc}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant={item.confidence > 0.9 ? 'default' : 'secondary'}>
+                                  {(item.confidence * 100).toFixed(0)}%
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700 hover:scale-110 transition-transform">
+                                  <CheckCircle className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:scale-110 transition-transform">
+                                  <XCircle className="h-5 w-5" />
+                                </Button>
+                              </TableCell>
+                            </motion.tr>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="h-24 text-center">No codes suggested.</TableCell>
+                          </TableRow>
+                        )}
+                      </AnimatePresence>
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -104,6 +171,7 @@ export function CodingWorkspace() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </main>
+      <Toaster richColors closeButton />
     </div>
   );
 }
