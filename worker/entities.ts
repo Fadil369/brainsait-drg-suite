@@ -32,7 +32,7 @@ export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
     return msg;
   }
 }
-// --- SOLVENTUM DRG SUITE ENTITIES ---
+// --- BRAINSAIT DRG SUITE ENTITIES ---
 export class PatientEntity extends IndexedEntity<Patient> {
   static readonly entityName = "patient";
   static readonly indexName = "patients";

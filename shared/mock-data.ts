@@ -9,7 +9,7 @@ export const MOCK_CHATS: Chat[] = [
 export const MOCK_CHAT_MESSAGES: ChatMessage[] = [
   { id: 'm1', chatId: 'c1', userId: 'u1', text: 'Hello', ts: Date.now() },
 ];
-// --- SOLVENTUM MOCK DATA ---
+// --- BRAINSAIT MOCK DATA ---
 export const MOCK_CLINICAL_NOTES: string[] = [
     "Patient with sukari symptoms, no complications noted.",
     "High blood pressure diagnosed, ضغط دم مرتفع controlled with medication.",
@@ -82,7 +82,7 @@ export const MOCK_AUDIT_LOGS: AuditLog[] = [
     { id: 'al2', actor: 'user:coder@hospital.sa', action: 'coding_job.reviewed', object_type: 'coding_job', object_id: 'job1', occurred_at: new Date(Date.now() - 3600000).toISOString() },
     { id: 'al3', actor: 'system', action: 'nphies.token_refreshed', object_type: 'integration', object_id: 'nphies', occurred_at: new Date(Date.now() - 7200000).toISOString() },
     { id: 'al4', actor: 'system', action: 'claim.status_updated', object_type: 'claim', object_id: 'cl3', occurred_at: new Date(Date.now() - 10800000).toISOString() },
-    { id: 'al5', actor: 'user:admin@solventum.sa', action: 'user.login', object_type: 'user', object_id: 'admin@solventum.sa', occurred_at: new Date(Date.now() - 14400000).toISOString() },
+    { id: 'al5', actor: 'user:admin@brainsait.sa', action: 'user.login', object_type: 'user', object_id: 'admin@brainsait.sa', occurred_at: new Date(Date.now() - 14400000).toISOString() },
 ];
 export const MOCK_PAYMENTS: Payment[] = [
     { id: 'pay1', claim_id: 'cl1', amount: 12500.50, currency: 'SAR', reconciled: true, received_at: new Date().toISOString() },

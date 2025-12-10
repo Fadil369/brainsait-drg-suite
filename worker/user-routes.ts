@@ -51,7 +51,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!await chat.exists()) return notFound(c, 'chat not found');
     return ok(c, await chat.sendMessage(userId, text.trim()));
   });
-  // --- SOLVENTUM DRG SUITE ROUTES ---
+  // --- BRAINSAIT DRG SUITE ROUTES ---
   // GET Claims (paginated and filterable)
   app.get('/api/claims', async (c) => {
     await ensureAllSeeds(c.env);

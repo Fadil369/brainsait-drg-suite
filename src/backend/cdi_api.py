@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 app = FastAPI(
-    title="Solventum CDI Nudge API",
+    title="BrainSAIT CDI Nudge API",
     description="Provides real-time Clinical Documentation Integrity (CDI) feedback on draft notes.",
     version="1.0.0"
 )
