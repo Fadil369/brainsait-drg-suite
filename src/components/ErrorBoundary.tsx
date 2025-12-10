@@ -33,7 +33,16 @@ export class ErrorBoundary extends Component<Props, State> {
         timestamp: new Date().toISOString(),
         errorBoundary: true,
       };
-      navigator.sendBeacon('/api/client-errors', JSON.stringify(payload));
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/client-errors', JSON.stringify(payload));
+      } else {
+        // Fallback for older browsers
+        fetch('/api/client-errors', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
       toast.info("Error report has been sent to the developers.");
     } catch (e) {
       console.error("Failed to report client error:", e);
@@ -45,6 +54,9 @@ export class ErrorBoundary extends Component<Props, State> {
       window.location.href = '/';
     }, 1000);
   };
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
   public render() {
     if (this.state.hasError) {
       return (
@@ -53,8 +65,9 @@ export class ErrorBoundary extends Component<Props, State> {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
+            className="w-full max-w-md"
           >
-            <Card className="w-full max-w-md text-center">
+            <Card className="w-full text-center">
               <CardHeader>
                 <div className="mx-auto bg-destructive/10 text-destructive rounded-full w-12 h-12 flex items-center justify-center mb-4">
                   <AlertTriangle className="w-6 h-6" />
@@ -67,14 +80,14 @@ export class ErrorBoundary extends Component<Props, State> {
               <CardContent>
                 <details className="text-left bg-muted p-2 rounded-md text-xs">
                   <summary>Error Details</summary>
-                  <pre className="mt-2 whitespace-pre-wrap break-all">
+                  <pre className="mt-2 whitespace-pre-wrap break-all bg-background/50 p-2 rounded overflow-x-auto">
                     <code>{this.state.error?.message}</code>
                   </pre>
                 </details>
               </CardContent>
-              <CardFooter className="flex justify-center gap-4">
-                <Button onClick={this.handleRedirect}>Go to Homepage</Button>
-                <Button variant="outline" onClick={() => this.reportError(this.state.error!)}>Report Again</Button>
+              <CardFooter className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button onClick={this.handleRetry}>Retry</Button>
+                <Button variant="outline" onClick={this.handleRedirect}>Go to Homepage</Button>
               </CardFooter>
             </Card>
           </motion.div>

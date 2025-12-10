@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import type { Claim } from '@shared/types';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { motion } from 'framer-motion';
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
     case 'FC_3': return 'default';
@@ -25,31 +26,45 @@ const getStatusVariant = (status: Claim['status']) => {
   }
 };
 export function ClaimsManager() {
-  const [filter, setFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isExporting, setIsExporting] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ['claims', { limit: 20 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 20 } }),
   });
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
   if (error) toast.error('Failed to load claims data.');
   const filteredClaims = useMemo(() => {
     if (!data?.items) return [];
     return data.items.filter(claim => {
-      const matchesText = filter ? claim.claim_number.toLowerCase().includes(filter.toLowerCase()) : true;
+      const matchesText = debouncedSearchTerm ? claim.claim_number.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) : true;
       const matchesStatus = statusFilter !== 'all' ? claim.status === statusFilter : true;
       return matchesText && matchesStatus;
     });
-  }, [data, filter, statusFilter]);
+  }, [data, debouncedSearchTerm, statusFilter]);
   const handleExport = () => {
-    const json = JSON.stringify(filteredClaims, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'brainsait-claims_export.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Claims exported successfully.');
+    setIsExporting(true);
+    setTimeout(() => {
+      const json = JSON.stringify(filteredClaims, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'brainsait-claims_export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Claims exported successfully.');
+      setIsExporting(false);
+    }, 500);
   };
   return (
     <AppLayout>
@@ -62,16 +77,16 @@ export function ClaimsManager() {
                 <CardTitle className="text-2xl font-display">Claims Manager</CardTitle>
                 <CardDescription>Search, filter, and manage all claims.</CardDescription>
               </div>
-              <Button onClick={handleExport} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export JSON
+              <Button onClick={handleExport} variant="outline" disabled={isExporting}>
+                {isExporting ? <RotateCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {isExporting ? 'Exporting...' : 'Export JSON'}
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
               <Input
                 placeholder="Filter by Claim #"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:max-w-sm"
               />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -113,8 +128,14 @@ export function ClaimsManager() {
                       </TableRow>
                     ))
                   ) : filteredClaims.length > 0 ? (
-                    filteredClaims.map((claim) => (
-                      <TableRow key={claim.id} className="hover:bg-muted/50">
+                    filteredClaims.map((claim, index) => (
+                      <motion.tr
+                        key={claim.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="hover:shadow-md transform hover:-translate-y-px transition-all duration-200"
+                      >
                         <TableCell className="font-medium">{claim.claim_number}</TableCell>
                         <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
                         <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
@@ -123,7 +144,7 @@ export function ClaimsManager() {
                           <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon"><RotateCw className="h-4 w-4" /></Button>
                         </TableCell>
-                      </TableRow>
+                      </motion.tr>
                     ))
                   ) : (
                     <TableRow>
