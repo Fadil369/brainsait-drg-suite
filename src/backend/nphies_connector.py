@@ -1,8 +1,6 @@
 import os
 import time
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from typing import Dict, Any, Optional
 # Custom Exceptions for clear error handling
 class NphiesAuthError(Exception):
@@ -19,6 +17,9 @@ class NphiesConnector:
     It provides methods for core nphies workflows like claim submission and
     status checks.
     """
+    RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
+    MAX_ATTEMPTS = 3
+    BACKOFF_SECONDS = 0.5
     def __init__(self, base_url: str, client_id: str, client_secret: str, timeout: int = 15, verify: bool = True):
         """
         Initializes the NphiesConnector.
@@ -37,18 +38,9 @@ class NphiesConnector:
         self.session = self._create_session()
     def _create_session(self) -> requests.Session:
         """
-        Creates a requests.Session with a retry strategy and TLS 1.2 enforcement.
+        Creates a requests.Session with TLS 1.2 enforcement.
         """
         session = requests.Session()
-        # Retry strategy for transient network errors or 5xx server errors
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=1
-        )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        session.mount("https://", adapter)
-        session.mount("http://", adapter)
         # Note: TLS 1.2 enforcement is typically handled by the underlying OS
         # and OpenSSL/cryptography libraries. Modern versions of `requests`
         # will use a secure TLS version by default. For explicit enforcement,
@@ -97,20 +89,36 @@ class NphiesConnector:
         """
         url = f"{self.base_url}{path}"
         headers = self._get_auth_headers()
-        try:
-            response = self.session.request(method, url, headers=headers, timeout=self.timeout, **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            # Log detailed error
-            print(f"Nphies API request to {url} failed with status {e.response.status_code}: {e.response.text}")
-            raise NphiesAPIError(f"API Error: {e.response.status_code} - {e.response.text}") from e
-        except requests.exceptions.Timeout:
-            print(f"Nphies API request to {url} timed out.")
-            raise NphiesAPIError("Request to nphies timed out.")
-        except requests.exceptions.RequestException as e:
-            print(f"Nphies API request to {url} failed: {e}")
-            raise NphiesAPIError(f"A network error occurred: {e}") from e
+        for attempt in range(self.MAX_ATTEMPTS):
+            try:
+                response = self.session.request(method, url, headers=headers, timeout=self.timeout, **kwargs)
+                if response.status_code in self.RETRY_STATUS_CODES and attempt < self.MAX_ATTEMPTS - 1:
+                    time.sleep(self.BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.HTTPError as e:
+                status = e.response.status_code if e.response else None
+                if status in self.RETRY_STATUS_CODES and attempt < self.MAX_ATTEMPTS - 1:
+                    time.sleep(self.BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                print(f"Nphies API request to {url} failed with status {status}: {e.response.text if e.response else ''}")
+                raise NphiesAPIError(f"API Error: {status} - {e.response.text if e.response else ''}") from e
+            except requests.exceptions.Timeout:
+                if attempt < self.MAX_ATTEMPTS - 1:
+                    time.sleep(self.BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                print(f"Nphies API request to {url} timed out.")
+                raise NphiesAPIError("Request to nphies timed out.")
+            except requests.exceptions.ConnectionError as e:
+                if attempt < self.MAX_ATTEMPTS - 1:
+                    time.sleep(self.BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                print(f"Nphies API request to {url} failed: {e}")
+                raise NphiesAPIError(f"A network error occurred: {e}") from e
+            except requests.exceptions.RequestException as e:
+                print(f"Nphies API request to {url} failed: {e}")
+                raise NphiesAPIError(f"A network error occurred: {e}") from e
     def submit_claim(self, claim_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Submits a claim to the nphies /claims endpoint.

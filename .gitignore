@@ -22,6 +22,8 @@ __pycache__/
 .vscode/
 *.swp
 *.swo
+__pycache__/
+*.pyc
 
 # OS files
 .DS_Store
