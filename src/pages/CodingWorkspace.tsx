@@ -30,7 +30,7 @@ export function CodingWorkspace() {
       <ThemeToggle className="fixed top-4 right-4 z-50" />
       <header className="flex items-center justify-between p-4 border-b bg-background shadow-sm">
         <div>
-          <h1 className="text-xl font-bold font-display">Coding Workspace</h1>
+          <h1 className="text-xl font-bold font-display">BrainSAIT Coding Workspace</h1>
           <p className="text-sm text-muted-foreground">
             {mockEncounterDetails.patientName} (MRN: {mockEncounterDetails.mrn}) - Admitted: {mockEncounterDetails.admissionDate}
           </p>

@@ -35,8 +35,8 @@ export function IntegrationConsole() {
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-display">nphies Integration Console</CardTitle>
-              <CardDescription>Manage and monitor the connection to the nphies platform.</CardDescription>
+              <CardTitle className="text-2xl font-display">BrainSAIT nphies Integration Console</CardTitle>
+              <CardDescription>Manage and monitor the BrainSAIT connection to the nphies platform.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-2">

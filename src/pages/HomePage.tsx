@@ -57,7 +57,7 @@ export function HomePage() {
       <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0E5FFF] to-[#083e9e]" />
-            <span className="text-lg font-bold font-display">Solventum</span>
+            <span className="text-lg font-bold font-display">BrainSAIT</span>
         </div>
         <nav className="hidden md:flex items-center gap-4">
             <Button variant="ghost" asChild><Link to="/dashboard">Dashboard</Link></Button>
@@ -71,7 +71,7 @@ export function HomePage() {
         <section className="py-20 md:py-28 lg:py-32 text-center">
           <div className="animate-fade-in space-y-6">
             <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight bg-clip-text text-transparent bg-gradient-to-r from-[#0E5FFF] to-[#083e9e]">
-              Solventum DRG Suite
+              BrainSAIT DRG Suite
             </h1>
             <p className="text-2xl md:text-3xl font-display text-foreground/90">
               Automated DRG & ICD Coding for Saudi Healthcare

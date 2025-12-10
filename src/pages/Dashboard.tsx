@@ -68,7 +68,7 @@ export function Dashboard() {
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-4">
         <h1 className="text-2xl font-bold font-display">Dashboard</h1>
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-muted-foreground hidden sm:inline">Welcome, {user?.username}!</span>
+          <span className="text-sm text-muted-foreground hidden sm:inline">Welcome to BrainSAIT DRG Suite, {user?.username}!</span>
           <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
           <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white" onClick={() => navigate('/')}>
             <FilePlus2 className="mr-2 h-4 w-4" /> Ingest Note

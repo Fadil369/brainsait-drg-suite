@@ -79,8 +79,8 @@ export function AuditReconciliation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Payments Reconciliation</CardTitle>
-                  <CardDescription>Match incoming payments to submitted claims.</CardDescription>
+                  <CardTitle>BrainSAIT Payments Reconciliation</CardTitle>
+                  <CardDescription>Match incoming payments to submitted BrainSAIT claims.</CardDescription>
                 </div>
                 <Button onClick={handleBatchReconcile} disabled={isReconciling}>
                   <Bot className="mr-2 h-4 w-4" />
@@ -136,7 +136,7 @@ export function AuditReconciliation() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>System Audit Logs</CardTitle>
+              <CardTitle>BrainSAIT System Audit Logs</CardTitle>
               <CardDescription>A general-purpose audit trail for SOC2 compliance.</CardDescription>
             </CardHeader>
             <CardContent>
