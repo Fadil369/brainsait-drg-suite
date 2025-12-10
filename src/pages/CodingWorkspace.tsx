@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle, XCircle, Send, ThumbsUp } from 'lucide-react';
+import { CheckCircle, XCircle, Send, ThumbsUp, FilePlus2 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { CodingJob } from '@shared/types';
@@ -21,6 +21,10 @@ const mockEncounterDetails = {
   mrn: 'MRN789012',
   admissionDate: '2024-08-15',
   encounterType: 'Inpatient',
+};
+const codeRowVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 },
 };
 export function CodingWorkspace() {
   const location = useLocation();
@@ -51,7 +55,7 @@ export function CodingWorkspace() {
   const isLoading = isLoadingLatestJob && !codingJob;
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12 h-[calc(100vh-3.5rem)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12 h-[calc(100vh-3.5rem)] flex flex-col">
         <Breadcrumbs />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
             <div>
@@ -78,7 +82,7 @@ export function CodingWorkspace() {
                 </Button>
             </div>
         </div>
-        <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="h-full w-full rounded-lg border bg-background">
+        <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="flex-1 w-full rounded-lg border bg-background">
           <ResizablePanel defaultSize={50}>
             <Card className="h-full flex flex-col border-0 rounded-none">
               <CardHeader className="py-4">
@@ -93,7 +97,7 @@ export function CodingWorkspace() {
                       <Skeleton className="h-4 w-3/4" />
                     </div>
                   ) : (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {codingJob?.source_text || "No clinical note available. Please ingest a note from the home page."}
                     </p>
                   )}
@@ -133,9 +137,9 @@ export function CodingWorkspace() {
                           codingJob.suggested_codes.map((item, index) => (
                             <motion.tr
                               key={item.code}
-                              layout
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
+                              variants={codeRowVariants}
+                              initial="hidden"
+                              animate="visible"
                               transition={{ duration: 0.3, delay: index * 0.05 }}
                               className="hover:bg-muted/50"
                             >
@@ -160,7 +164,14 @@ export function CodingWorkspace() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">No codes suggested.</TableCell>
+                            <TableCell colSpan={4} className="h-24 text-center">
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
+                                    <p>No codes suggested for this note.</p>
+                                    <Button asChild variant="outline">
+                                        <Link to="/"><FilePlus2 className="mr-2 h-4 w-4" /> Ingest a New Note</Link>
+                                    </Button>
+                                </div>
+                            </TableCell>
                           </TableRow>
                         )}
                       </AnimatePresence>

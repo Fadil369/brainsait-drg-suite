@@ -75,7 +75,7 @@ export function AuditReconciliation() {
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Breadcrumbs />
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-4 sm:gap-8 lg:grid-cols-2">
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -83,10 +83,12 @@ export function AuditReconciliation() {
                   <CardTitle>Payments Reconciliation</CardTitle>
                   <CardDescription>Match incoming payments to claims.</CardDescription>
                 </div>
-                <Button onClick={handleBatchReconcile} disabled={isReconciling}>
-                  <Bot className="mr-2 h-4 w-4" />
-                  {isReconciling ? 'Reconciling...' : 'Run Batch'}
-                </Button>
+                <motion.div whileTap={{ scale: 0.95 }}>
+                  <Button onClick={handleBatchReconcile} disabled={isReconciling}>
+                    <Bot className="mr-2 h-4 w-4" />
+                    {isReconciling ? 'Reconciling...' : 'Run Batch'}
+                  </Button>
+                </motion.div>
               </div>
               {isReconciling && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
@@ -101,10 +103,10 @@ export function AuditReconciliation() {
                     <TableRow>
                       <TableHead>Claim ID</TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('amount')}>
-                        <div className="flex items-center">Amount <ArrowUpDown className="ml-2 h-4 w-4" /></div>
+                        <div className="flex items-center">Amount <ArrowUpDown className={`ml-2 h-4 w-4 transition-transform ${sortKey === 'amount' && sortDirection === 'desc' ? 'rotate-180' : ''}`} /></div>
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('received_at')}>
-                        <div className="flex items-center">Received <ArrowUpDown className="ml-2 h-4 w-4" /></div>
+                        <div className="flex items-center">Received <ArrowUpDown className={`ml-2 h-4 w-4 transition-transform ${sortKey === 'received_at' && sortDirection === 'desc' ? 'rotate-180' : ''}`} /></div>
                       </TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>

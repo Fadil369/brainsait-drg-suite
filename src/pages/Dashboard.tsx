@@ -13,6 +13,23 @@ import type { Claim, CodingJob, Nudge } from '@shared/types';
 import { useAuth } from '@/hooks/use-auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { motion } from 'framer-motion';
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+  },
+};
 const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string }) => {
   const cardContent = (
     <Card className="hover:shadow-lg transition-shadow">
@@ -22,7 +39,7 @@ const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; va
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-8 w-1/2" />
+          <Skeleton className="h-8 w-1/2 animate-pulse" />
         ) : (
           <div className="text-2xl font-bold">{value}</div>
         )}
@@ -65,11 +82,22 @@ export function Dashboard() {
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Breadcrumbs />
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
-          <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
-          <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
-        </div>
+        <motion.div
+          className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={itemVariants}>
+            <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
+          </motion.div>
+        </motion.div>
         <div className="grid gap-8 md:grid-cols-2 mt-8">
           <Card>
             <CardHeader>
@@ -77,7 +105,7 @@ export function Dashboard() {
               <CardDescription>A view of the latest claims processed by the system.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -90,14 +118,14 @@ export function Dashboard() {
                     {isLoadingClaims ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-20 animate-pulse" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16 animate-pulse" /></TableCell>
                         </TableRow>
                       ))
                     ) : claimsData?.items && claimsData.items.length > 0 ? (
                       claimsData.items.map(claim => (
-                        <TableRow key={claim.id}>
+                        <TableRow key={claim.id} className="transition-colors hover:bg-muted/50">
                           <TableCell className="font-medium">{claim.claim_number}</TableCell>
                           <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
                           <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
@@ -116,7 +144,7 @@ export function Dashboard() {
               <CardTitle>Quick Access</CardTitle>
               <CardDescription>Navigate to key system modules.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
                 <Button variant="outline" className="w-full justify-start" asChild><Link to="/cdi-nudges"><Lightbulb className="mr-2 h-4 w-4" /> CDI Nudges Console</Link></Button>
                 {user?.role === 'admin' && (
                   <>
