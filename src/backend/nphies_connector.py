@@ -97,20 +97,30 @@ class NphiesConnector:
         """
         url = f"{self.base_url}{path}"
         headers = self._get_auth_headers()
-        try:
-            response = self.session.request(method, url, headers=headers, timeout=self.timeout, **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            # Log detailed error
-            print(f"Nphies API request to {url} failed with status {e.response.status_code}: {e.response.text}")
-            raise NphiesAPIError(f"API Error: {e.response.status_code} - {e.response.text}") from e
-        except requests.exceptions.Timeout:
-            print(f"Nphies API request to {url} timed out.")
-            raise NphiesAPIError("Request to nphies timed out.")
-        except requests.exceptions.RequestException as e:
-            print(f"Nphies API request to {url} failed: {e}")
-            raise NphiesAPIError(f"A network error occurred: {e}") from e
+        retry_statuses = {429, 500, 502, 503, 504}
+        max_attempts = 3
+        backoff = 0.5
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.request(method, url, headers=headers, timeout=self.timeout, **kwargs)
+                if response.status_code in retry_statuses and attempt < max_attempts - 1:
+                    time.sleep(backoff * (attempt + 1))
+                    continue
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.HTTPError as e:
+                status = e.response.status_code if e.response else None
+                if status in retry_statuses and attempt < max_attempts - 1:
+                    time.sleep(backoff * (attempt + 1))
+                    continue
+                print(f"Nphies API request to {url} failed with status {status}: {e.response.text if e.response else ''}")
+                raise NphiesAPIError(f"API Error: {status} - {e.response.text if e.response else ''}") from e
+            except requests.exceptions.Timeout:
+                print(f"Nphies API request to {url} timed out.")
+                raise NphiesAPIError("Request to nphies timed out.")
+            except requests.exceptions.RequestException as e:
+                print(f"Nphies API request to {url} failed: {e}")
+                raise NphiesAPIError(f"A network error occurred: {e}") from e
     def submit_claim(self, claim_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Submits a claim to the nphies /claims endpoint.
