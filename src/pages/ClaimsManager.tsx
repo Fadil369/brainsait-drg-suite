@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, RotateCw, Eye } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Claim } from '@shared/types';
 import { format } from 'date-fns';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
     case 'FC_3': return 'default';
@@ -27,7 +28,7 @@ export function ClaimsManager() {
   const [filter, setFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { data, isLoading, error } = useQuery({
-    queryKey: ['claims', { limit: 20 }], // Fetch more for filtering
+    queryKey: ['claims', { limit: 20 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 20 } }),
   });
   if (error) toast.error('Failed to load claims data.');
@@ -51,30 +52,30 @@ export function ClaimsManager() {
     toast.success('Claims exported successfully.');
   };
   return (
-    <div className="min-h-screen w-full bg-muted/40">
-      <ThemeToggle className="fixed top-4 right-4 z-50" />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+        <Breadcrumbs />
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-display">BrainSAIT Claims Manager</CardTitle>
-                <CardDescription>Search, filter, and manage all claims in the BrainSAIT suite.</CardDescription>
+                <CardTitle className="text-2xl font-display">Claims Manager</CardTitle>
+                <CardDescription>Search, filter, and manage all claims.</CardDescription>
               </div>
               <Button onClick={handleExport} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
                 Export JSON
               </Button>
             </div>
-            <div className="flex items-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
               <Input
                 placeholder="Filter by Claim #"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="max-w-sm"
+                className="w-full sm:max-w-sm"
               />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -89,7 +90,7 @@ export function ClaimsManager() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -136,8 +137,8 @@ export function ClaimsManager() {
             </div>
           </CardContent>
         </Card>
-      </main>
+      </div>
       <Toaster richColors closeButton />
-    </div>
+    </AppLayout>
   );
 }

@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FilePlus2, Clock, FileText, Lightbulb, Scale, Settings } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Clock, FileText, Lightbulb, Scale, Settings } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Claim, CodingJob, Nudge } from '@shared/types';
 import { useAuth } from '@/hooks/use-auth';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string }) => {
   const cardContent = (
     <Card className="hover:shadow-lg transition-shadow">
@@ -28,7 +29,7 @@ const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; va
       </CardContent>
     </Card>
   );
-  return linkTo ? <Link to={linkTo}>{cardContent}</Link> : cardContent;
+  return linkTo ? <Link to={linkTo} className="focus:outline-none focus:ring-2 focus:ring-ring rounded-lg">{cardContent}</Link> : cardContent;
 };
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
@@ -41,9 +42,7 @@ const getStatusVariant = (status: Claim['status']) => {
   }
 };
 export function Dashboard() {
-  const navigate = useNavigate();
   const user = useAuth(s => s.user);
-  const logout = useAuth(s => s.logout);
   const { data: claimsData, isLoading: isLoadingClaims, error: claimsError } = useQuery({
     queryKey: ['claims', { limit: 5 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 5 } }),
@@ -63,20 +62,10 @@ export function Dashboard() {
   const pendingJobs = jobsData?.items?.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
   const activeNudges = nudgesData?.items?.filter(n => n.status === 'active').length ?? 0;
   return (
-    <div className="min-h-screen w-full bg-muted/40">
-      <ThemeToggle className="fixed top-4 right-4 z-50" />
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-4">
-        <h1 className="text-2xl font-bold font-display">Dashboard</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-muted-foreground hidden sm:inline">Welcome to BrainSAIT DRG Suite, {user?.username}!</span>
-          <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
-          <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white" onClick={() => navigate('/')}>
-            <FilePlus2 className="mr-2 h-4 w-4" /> Ingest Note
-          </Button>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+        <Breadcrumbs />
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
           <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
           <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
@@ -88,36 +77,38 @@ export function Dashboard() {
               <CardDescription>A view of the latest claims processed by the system.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Claim #</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoadingClaims ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : claimsData?.items && claimsData.items.length > 0 ? (
-                    claimsData.items.map(claim => (
-                      <TableRow key={claim.id}>
-                        <TableCell className="font-medium">{claim.claim_number}</TableCell>
-                        <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
-                        <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow><TableCell colSpan={3} className="text-center">No recent claims found.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Claim #</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingClaims ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : claimsData?.items && claimsData.items.length > 0 ? (
+                      claimsData.items.map(claim => (
+                        <TableRow key={claim.id}>
+                          <TableCell className="font-medium">{claim.claim_number}</TableCell>
+                          <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
+                          <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow><TableCell colSpan={3} className="text-center h-24">No recent claims found.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -136,8 +127,8 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
       <Toaster richColors closeButton />
-    </div>
+    </AppLayout>
   );
 }

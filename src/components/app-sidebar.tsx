@@ -1,6 +1,6 @@
-/* This is a demo sidebar. **COMPULSORY** Edit this file to customize the sidebar OR remove it from appLayout OR don't use appLayout at all */
-import React from "react";
-import { Home, Layers, Compass, Star, Settings, LifeBuoy } from "lucide-react";
+import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, LayoutDashboard, FileText, Bot, Lightbulb, Settings, Scale, LogOut, FilePlus2 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -8,65 +8,93 @@ import {
   SidebarGroup,
   SidebarHeader,
   SidebarSeparator,
-  SidebarInput,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuAction,
-  SidebarMenuBadge,
-} from "@/components/ui/sidebar";
-
+} from '@/components/ui/sidebar';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from './ui/button';
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/coding-workspace', label: 'Coding Workspace', icon: Bot },
+  { href: '/claims-manager', label: 'Claims Manager', icon: FileText },
+  { href: '/cdi-nudges', label: 'CDI Nudges', icon: Lightbulb },
+];
+const adminNavItems = [
+  { href: '/integration', label: 'Integration', icon: Settings },
+  { href: '/audit-reconciliation', label: 'Audit & Reconciliation', icon: Scale },
+];
 export function AppSidebar(): JSX.Element {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const user = useAuth(s => s.user);
+  const logout = useAuth(s => s.logout);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500" />
-          <span className="text-sm font-medium">Demo Sidebar</span>
-        </div>
-        <SidebarInput placeholder="Search" />
+        <Link to="/" className="flex items-center gap-2 px-2 py-1">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0E5FFF] to-[#083e9e]" />
+          <span className="text-lg font-bold font-display">BrainSAIT</span>
+        </Link>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent className="flex flex-col justify-between">
+        <div>
+          <SidebarGroup>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
+                    <Link to={item.href}>
+                      <item.icon className="size-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          {user?.role === 'admin' && (
+            <>
+              <SidebarSeparator />
+              <SidebarGroup>
+                <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarMenu>
+                  {adminNavItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
+                        <Link to={item.href}>
+                          <item.icon className="size-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
+          )}
+        </div>
+        <div className="mt-auto">
+          <SidebarSeparator />
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive>
-                <a href="#"><Home /> <span>Home</span></a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#"><Layers /> <span>Projects</span></a>
-              </SidebarMenuButton>
-              <SidebarMenuAction>
-                <Star className="size-4" />
-              </SidebarMenuAction>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#"><Compass /> <span>Explore</span></a>
+              <SidebarMenuButton onClick={handleLogout}>
+                <LogOut className="size-4" />
+                <span>Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Quick Links</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#"><Star /> <span>Starred</span></a>
-              </SidebarMenuButton>
-              <SidebarMenuBadge>5</SidebarMenuBadge>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        </div>
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-2 text-xs text-muted-foreground">A simple shadcn sidebar</div>
+        <div className="px-2 text-xs text-muted-foreground">
+          Logged in as {user?.username} ({user?.role})
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
