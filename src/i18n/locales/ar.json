@@ -1,0 +1,184 @@
+{
+  "app": {
+    "name": "برينسيت لإدارة التشفير الطبي",
+    "tagline": "إدارة دورة الإيرادات والترميز الطبي بالذكاء الاصطناعي"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "codingWorkspace": "مساحة الترميز",
+    "claimsManager": "إدارة المطالبات",
+    "cdiNudges": "تحسين التوثيق السريري",
+    "integration": "التكامل",
+    "audit": "التدقيق والمطابقة",
+    "logout": "تسجيل الخروج"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "loginButton": "دخول",
+    "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "welcome": "مرحباً بعودتك"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "overview": "نظرة عامة",
+    "recentClaims": "المطالبات الأخيرة",
+    "codingJobs": "مهام الترميز",
+    "activeNudges": "التنبيهات النشطة",
+    "statistics": "الإحصائيات",
+    "totalClaims": "إجمالي المطالبات",
+    "pendingReview": "قيد المراجعة",
+    "approved": "معتمد",
+    "rejected": "مرفوض",
+    "performance": "مؤشرات الأداء",
+    "automationRate": "معدل الأتمتة",
+    "accuracyRate": "معدل الدقة",
+    "avgProcessingTime": "متوسط وقت المعالجة"
+  },
+  "coding": {
+    "workspace": "مساحة الترميز",
+    "clinicalNote": "الملاحظة السريرية",
+    "suggestedCodes": "الرموز المقترحة",
+    "confidence": "مستوى الثقة",
+    "phase": "المرحلة",
+    "accept": "قبول",
+    "reject": "رفض",
+    "noJobsSelected": "لم يتم اختيار مهمة ترميز",
+    "selectJob": "اختر مهمة من القائمة لعرض التفاصيل",
+    "analyzingNote": "جاري تحليل الملاحظة السريرية...",
+    "phases": {
+      "CAC": "الترميز بمساعدة الكمبيوتر",
+      "SEMI_AUTONOMOUS": "شبه آلي",
+      "AUTONOMOUS": "آلي بالكامل"
+    }
+  },
+  "claims": {
+    "title": "إدارة المطالبات",
+    "claimNumber": "رقم المطالبة",
+    "patient": "المريض",
+    "status": "الحالة",
+    "amount": "المبلغ",
+    "submittedDate": "تاريخ التقديم",
+    "actions": "الإجراءات",
+    "export": "تصدير",
+    "filter": "تصفية",
+    "search": "البحث في المطالبات...",
+    "statuses": {
+      "DRAFT": "مسودة",
+      "SENT": "مرسل",
+      "FC_3": "معتمد",
+      "REJECTED": "مرفوض",
+      "NEEDS_REVIEW": "يحتاج مراجعة"
+    },
+    "viewDetails": "عرض التفاصيل",
+    "noClaims": "لا توجد مطالبات",
+    "total": "إجمالي المطالبات"
+  },
+  "cdi": {
+    "title": "وحدة تحسين التوثيق السريري",
+    "nudges": "تنبيهات تحسين التوثيق السريري",
+    "encounter": "المقابلة",
+    "severity": "مستوى الأهمية",
+    "prompt": "التنبيه",
+    "status": "الحالة",
+    "apply": "تطبيق",
+    "dismiss": "إخفاء",
+    "severities": {
+      "info": "معلومات",
+      "warning": "تحذير",
+      "critical": "حرج"
+    },
+    "statuses": {
+      "active": "نشط",
+      "resolved": "محلول",
+      "dismissed": "مخفي"
+    },
+    "noNudges": "لا توجد تنبيهات نشطة",
+    "appliedSuccess": "تم تطبيق التنبيه بنجاح"
+  },
+  "integration": {
+    "title": "وحدة التكامل",
+    "nphies": "تكامل نفيس",
+    "configuration": "الإعدادات",
+    "clientId": "معرف العميل",
+    "baseUrl": "عنوان الخدمة",
+    "status": "حالة الاتصال",
+    "connected": "متصل",
+    "disconnected": "غير متصل",
+    "testConnection": "اختبار الاتصال",
+    "submitClaim": "إرسال مطالبة",
+    "checkStatus": "التحقق من الحالة",
+    "reconcilePayment": "مطابقة الدفعة",
+    "apiEndpoints": "نقاط الاتصال",
+    "documentation": "التوثيق",
+    "logs": "سجلات التكامل"
+  },
+  "audit": {
+    "title": "التدقيق والمطابقة",
+    "payments": "المدفوعات",
+    "auditLogs": "سجلات التدقيق",
+    "reconciliation": "المطابقة",
+    "actor": "المستخدم",
+    "action": "الإجراء",
+    "object": "الكائن",
+    "timestamp": "التاريخ والوقت",
+    "reconcileAll": "مطابقة الكل",
+    "reconciled": "مطابق",
+    "pending": "معلق",
+    "noLogs": "لا توجد سجلات تدقيق"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "close": "إغلاق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "refresh": "تحديث",
+    "success": "نجاح",
+    "error": "خطأ",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "backToHome": "العودة للرئيسية",
+    "notFound": "الصفحة غير موجودة",
+    "serverError": "حدث خطأ في الخادم"
+  },
+  "features": {
+    "aiCoding": "ترميز بالذكاء الاصطناعي",
+    "aiCodingDesc": "استفد من الذكاء الاصطناعي المتقدم لاقتراح رموز ICD-10 تلقائياً من الملاحظات السريرية",
+    "threePhase": "أتمتة ثلاثية المراحل",
+    "threePhaseDesc": "سير عمل ترميز CAC وشبه آلي وآلي بالكامل",
+    "cdiNudges": "تنبيهات تحسين التوثيق",
+    "cdiNudgesDesc": "اقتراحات استباقية لتحسين التوثيق السريري",
+    "nphiesIntegration": "تكامل نفيس",
+    "nphiesIntegrationDesc": "تكامل سلس مع منصة نفيس السعودية",
+    "auditTrail": "سجل تدقيق شامل",
+    "auditTrailDesc": "تتبع جميع الإجراءات مع تسجيل متوافق مع SOC2",
+    "paymentReconciliation": "مطابقة المدفوعات",
+    "paymentReconciliationDesc": "تتبع ومطابقة المدفوعات تلقائياً"
+  },
+  "home": {
+    "hero": {
+      "title": "حوّل دورة الإيرادات الصحية بالذكاء الاصطناعي",
+      "subtitle": "ترميز DRG الآلي، إدارة المطالبات، وتحسين التوثيق السريري لمقدمي الرعاية الصحية السعوديين",
+      "cta": "ابدأ الآن",
+      "learnMore": "اعرف المزيد"
+    },
+    "ingestNote": {
+      "title": "جرب الترميز بالذكاء الاصطناعي الآن",
+      "placeholder": "الصق الملاحظة السريرية هنا...",
+      "submit": "تحليل الملاحظة",
+      "analyzing": "جاري التحليل..."
+    }
+  }
+}

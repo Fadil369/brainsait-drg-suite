@@ -1,0 +1,184 @@
+{
+  "app": {
+    "name": "BrainSAIT DRG Suite",
+    "tagline": "AI-Powered Healthcare Coding & Revenue Cycle Management"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "codingWorkspace": "Coding Workspace",
+    "claimsManager": "Claims Manager",
+    "cdiNudges": "CDI Nudges",
+    "integration": "Integration",
+    "audit": "Audit & Reconciliation",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "invalidCredentials": "Invalid username or password",
+    "welcome": "Welcome back"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "recentClaims": "Recent Claims",
+    "codingJobs": "Coding Jobs",
+    "activeNudges": "Active Nudges",
+    "statistics": "Statistics",
+    "totalClaims": "Total Claims",
+    "pendingReview": "Pending Review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "performance": "Performance Metrics",
+    "automationRate": "Automation Rate",
+    "accuracyRate": "Accuracy Rate",
+    "avgProcessingTime": "Avg Processing Time"
+  },
+  "coding": {
+    "workspace": "Coding Workspace",
+    "clinicalNote": "Clinical Note",
+    "suggestedCodes": "Suggested Codes",
+    "confidence": "Confidence",
+    "phase": "Phase",
+    "accept": "Accept",
+    "reject": "Reject",
+    "noJobsSelected": "No coding job selected",
+    "selectJob": "Select a job from the list to view details",
+    "analyzingNote": "Analyzing clinical note...",
+    "phases": {
+      "CAC": "Computer-Assisted Coding",
+      "SEMI_AUTONOMOUS": "Semi-Autonomous",
+      "AUTONOMOUS": "Autonomous"
+    }
+  },
+  "claims": {
+    "title": "Claims Manager",
+    "claimNumber": "Claim Number",
+    "patient": "Patient",
+    "status": "Status",
+    "amount": "Amount",
+    "submittedDate": "Submitted Date",
+    "actions": "Actions",
+    "export": "Export",
+    "filter": "Filter",
+    "search": "Search claims...",
+    "statuses": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "FC_3": "Approved",
+      "REJECTED": "Rejected",
+      "NEEDS_REVIEW": "Needs Review"
+    },
+    "viewDetails": "View Details",
+    "noClaims": "No claims found",
+    "total": "Total Claims"
+  },
+  "cdi": {
+    "title": "CDI Nudges Console",
+    "nudges": "Clinical Documentation Improvement Nudges",
+    "encounter": "Encounter",
+    "severity": "Severity",
+    "prompt": "Prompt",
+    "status": "Status",
+    "apply": "Apply",
+    "dismiss": "Dismiss",
+    "severities": {
+      "info": "Info",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "statuses": {
+      "active": "Active",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "noNudges": "No active nudges",
+    "appliedSuccess": "Nudge applied successfully"
+  },
+  "integration": {
+    "title": "Integration Console",
+    "nphies": "Nphies Integration",
+    "configuration": "Configuration",
+    "clientId": "Client ID",
+    "baseUrl": "Base URL",
+    "status": "Connection Status",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "testConnection": "Test Connection",
+    "submitClaim": "Submit Claim",
+    "checkStatus": "Check Status",
+    "reconcilePayment": "Reconcile Payment",
+    "apiEndpoints": "API Endpoints",
+    "documentation": "Documentation",
+    "logs": "Integration Logs"
+  },
+  "audit": {
+    "title": "Audit & Reconciliation",
+    "payments": "Payments",
+    "auditLogs": "Audit Logs",
+    "reconciliation": "Reconciliation",
+    "actor": "Actor",
+    "action": "Action",
+    "object": "Object",
+    "timestamp": "Timestamp",
+    "reconcileAll": "Reconcile All",
+    "reconciled": "Reconciled",
+    "pending": "Pending",
+    "noLogs": "No audit logs found"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "backToHome": "Back to Home",
+    "notFound": "Page not found",
+    "serverError": "Server error occurred"
+  },
+  "features": {
+    "aiCoding": "AI-Powered Coding",
+    "aiCodingDesc": "Leverage advanced AI to automatically suggest ICD-10 codes from clinical notes",
+    "threePhase": "Three-Phase Automation",
+    "threePhaseDesc": "CAC, Semi-Autonomous, and Autonomous coding workflows",
+    "cdiNudges": "CDI Nudges",
+    "cdiNudgesDesc": "Proactive clinical documentation improvement suggestions",
+    "nphiesIntegration": "Nphies Integration",
+    "nphiesIntegrationDesc": "Seamless integration with Saudi Arabia's Nphies platform",
+    "auditTrail": "Comprehensive Audit Trail",
+    "auditTrailDesc": "Track all actions with SOC2-compliant audit logging",
+    "paymentReconciliation": "Payment Reconciliation",
+    "paymentReconciliationDesc": "Automated payment tracking and reconciliation"
+  },
+  "home": {
+    "hero": {
+      "title": "Transform Healthcare Revenue Cycle with AI",
+      "subtitle": "Automated DRG coding, claims management, and clinical documentation improvement for Saudi healthcare providers",
+      "cta": "Get Started",
+      "learnMore": "Learn More"
+    },
+    "ingestNote": {
+      "title": "Try AI Coding Now",
+      "placeholder": "Paste clinical note here...",
+      "submit": "Analyze Note",
+      "analyzing": "Analyzing..."
+    }
+  }
+}

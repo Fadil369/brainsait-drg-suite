@@ -10,6 +10,7 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import '@/i18n/config';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { CodingWorkspace } from '@/pages/CodingWorkspace';

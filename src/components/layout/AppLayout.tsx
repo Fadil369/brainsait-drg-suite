@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '../ui/button';
 import { FilePlus2 } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
+import { LanguageToggle } from '../LanguageToggle';
 import { useIsMobile } from '@/hooks/use-mobile';
 type AppLayoutProps = {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export function AppLayout({ children }: AppLayoutProps): JSX.Element {
                 <FilePlus2 className="mr-0 sm:mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Ingest Note</span>
               </Button>
+              <LanguageToggle />
               <ThemeToggle className="relative top-0 right-0" />
             </div>
           </header>

@@ -48,7 +48,7 @@ class NphiesConnector:
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("https://", adapter)
-        session.mount("http://", adapter)
+        # Security: Do NOT mount HTTP adapter - only HTTPS allowed
         # Note: TLS 1.2 enforcement is typically handled by the underlying OS
         # and OpenSSL/cryptography libraries. Modern versions of `requests`
         # will use a secure TLS version by default. For explicit enforcement,
@@ -131,6 +131,84 @@ class NphiesConnector:
         Sends payment reconciliation data to the nphies /payments/reconcile endpoint.
         """
         return self._request("POST", "/payments/reconcile", json=payment_data)
+
+    def cancel_claim(self, claim_id: str, reason: str) -> Dict[str, Any]:
+        """
+        Cancels a previously submitted claim.
+        Args:
+            claim_id: The nphies claim ID to cancel
+            reason: Reason for cancellation
+        """
+        return self._request("POST", f"/claims/{claim_id}/cancel", json={"reason": reason})
+
+    def check_eligibility(self, patient_id: str, service_date: str) -> Dict[str, Any]:
+        """
+        Checks patient eligibility for services.
+        Args:
+            patient_id: Patient national ID
+            service_date: Date of service (YYYY-MM-DD format)
+        """
+        return self._request("GET", f"/eligibility/{patient_id}", params={"serviceDate": service_date})
+
+    def verify_coverage(self, patient_id: str, payer_id: str) -> Dict[str, Any]:
+        """
+        Verifies insurance coverage for a patient.
+        Args:
+            patient_id: Patient national ID
+            payer_id: Insurance payer ID
+        """
+        return self._request("GET", f"/coverage/{patient_id}", params={"payerId": payer_id})
+
+    def submit_batch_claims(self, claims: list[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Submits multiple claims in a single batch request.
+        Args:
+            claims: List of claim data dictionaries
+        Returns:
+            Batch submission result with individual claim statuses
+        """
+        return self._request("POST", "/claims/batch", json={"claims": claims})
+
+    def get_claim_details(self, claim_id: str) -> Dict[str, Any]:
+        """
+        Retrieves detailed information about a claim.
+        Args:
+            claim_id: The nphies claim ID
+        """
+        return self._request("GET", f"/claims/{claim_id}")
+
+    def search_claims(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Searches for claims based on various criteria.
+        Args:
+            filters: Search parameters (e.g., patient_id, date_range, status)
+        """
+        return self._request("GET", "/claims/search", params=filters)
+
+    def get_payment_details(self, payment_id: str) -> Dict[str, Any]:
+        """
+        Retrieves payment reconciliation details.
+        Args:
+            payment_id: Payment transaction ID
+        """
+        return self._request("GET", f"/payments/{payment_id}")
+
+    def request_communication(self, claim_id: str, message: str) -> Dict[str, Any]:
+        """
+        Sends a communication/query to the payer regarding a claim.
+        Args:
+            claim_id: The nphies claim ID
+            message: Communication message
+        """
+        return self._request("POST", f"/claims/{claim_id}/communication", json={"message": message})
+
+    def poll_status_updates(self, claim_ids: list[str]) -> Dict[str, Any]:
+        """
+        Polls status updates for multiple claims efficiently.
+        Args:
+            claim_ids: List of claim IDs to check
+        """
+        return self._request("POST", "/claims/status/batch", json={"claim_ids": claim_ids})
 # Example usage (requires environment variables for credentials)
 if __name__ == "__main__":
     NPHIES_BASE_URL = os.getenv("NPHIES_BASE_URL", "https://sandbox.nphies.sa/api")
