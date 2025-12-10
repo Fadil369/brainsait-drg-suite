@@ -1,138 +1,137 @@
-// Home page of the app.
-// Currently a demo placeholder "please wait" screen.
-// Replace this file with your actual app UI. Do not delete it to use some other file as homepage. Simply replace the entire contents of this file.
-
-import { useEffect, useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
-
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { HAS_TEMPLATE_DEMO, TemplateDemo } from '@/components/TemplateDemo'
-import { Button } from '@/components/ui/button'
-import { Toaster, toast } from '@/components/ui/sonner'
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BotMessageSquare, FileText, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Toaster, toast } from 'sonner';
+const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
+  <Card className="text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-in-out bg-card/50 backdrop-blur-sm">
+    <CardHeader>
+      <div className="mx-auto bg-primary/10 text-primary rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+        {icon}
+      </div>
+      <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-muted-foreground">{description}</p>
+    </CardContent>
+  </Card>
+);
 export function HomePage() {
-  const [coins, setCoins] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [elapsedMs, setElapsedMs] = useState(0)
-
-  useEffect(() => {
-    if (!isRunning || startedAt === null) return
-
-    const t = setInterval(() => {
-      setElapsedMs(Date.now() - startedAt)
-    }, 250)
-
-    return () => clearInterval(t)
-  }, [isRunning, startedAt])
-
-  const formatted = useMemo(() => formatDuration(elapsedMs), [elapsedMs])
-
-  const onPleaseWait = () => {
-    setCoins((c) => c + 1)
-
-    if (!isRunning) {
-      // Resume from the current elapsed time
-      setStartedAt(Date.now() - elapsedMs)
-      setIsRunning(true)
-      toast.success('Building your app…', {
-        description: "Hang tight — we're setting everything up.",
-      })
-      return
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const navigate = useNavigate();
+  const handleAnalyze = () => {
+    if (!noteText.trim()) {
+      toast.error('Please paste a clinical note to analyze.');
+      return;
     }
-
-    setIsRunning(false)
-    toast.info('Still working…', {
-      description: 'You can come back in a moment.',
-    })
-  }
-
-  const onReset = () => {
-    setCoins(0)
-    setIsRunning(false)
-    setStartedAt(null)
-    setElapsedMs(0)
-    toast('Reset complete')
-  }
-
-  const onAddCoin = () => {
-    setCoins((c) => c + 1)
-    toast('Coin added')
-  }
-
+    // In a real app, you'd likely POST this to a backend.
+    // For this demo, we pass it via route state to the workspace.
+    navigate('/coding-workspace', { state: { clinicalNote: noteText } });
+  };
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-      <ThemeToggle />
-      <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-
-      <div className="text-center space-y-8 relative z-10 animate-fade-in w-full">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-            <Sparkles className="w-8 h-8 text-white rotating" />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-        </div>
-
-        {HAS_TEMPLATE_DEMO ? (
-          <div className="max-w-5xl mx-auto text-left">
-            <TemplateDemo />
-          </div>
-        ) : (
-          <>
+    <div className="min-h-screen w-full bg-background text-foreground relative overflow-x-hidden">
+      <ThemeToggle className="fixed top-4 right-4" />
+      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(#0E5FFF_1px,transparent_1px)] [background-size:32px_32px] opacity-20"></div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero Section */}
+        <section className="py-24 md:py-32 lg:py-40 text-center">
+          <div className="animate-fade-in space-y-6">
+            <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight bg-clip-text text-transparent bg-gradient-to-r from-[#0E5FFF] to-[#083e9e]">
+              Solventum DRG Suite
+            </h1>
+            <p className="text-2xl md:text-3xl font-display text-foreground/90">
+              Automated DRG & ICD Coding for Saudi Healthcare
+            </p>
+            <p className="max-w-3xl mx-auto text-lg text-muted-foreground text-pretty">
+              Leverage our SOC2+ compliant AI to streamline clinical coding, automate nphies claim submissions, and enhance revenue cycle integrity with real-time CDI nudges.
+            </p>
             <div className="flex justify-center gap-4">
               <Button
                 size="lg"
-                onClick={onPleaseWait}
-                className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-                aria-live="polite"
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
               >
-                Please Wait
+                Ingest Note & Start Demo
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
-
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div>
-                Time elapsed:{' '}
-                <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-              </div>
-              <div>
-                Coins:{' '}
-                <span className="font-medium tabular-nums text-foreground">{coins}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Reset
-              </Button>
-              <Button variant="outline" size="sm" onClick={onAddCoin}>
-                Add Coin
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-
-      <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-        <p>Powered by Cloudflare</p>
+          </div>
+        </section>
+        {/* Features Section */}
+        <section className="py-16 md:py-24">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-display">A Phased Journey to Automation</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+              From computer-assisted coding to full autonomy, our platform adapts to your workflow.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<FileText className="w-6 h-6" />}
+              title="Computer-Assisted Coding (CAC)"
+              description="Our AI ingests clinical notes and suggests accurate ICD/DRG codes, reducing manual effort and improving coder consistency."
+            />
+            <FeatureCard
+              icon={<Zap className="w-6 h-6" />}
+              title="Semi-Autonomous Workflow"
+              description="High-confidence codes are automatically queued for batch review, freeing up your team to focus on complex cases."
+            />
+            <FeatureCard
+              icon={<BotMessageSquare className="w-6 h-6" />}
+              title="Fully Autonomous Submission"
+              description="For low-complexity visits with near-certainty scores, claims are automatically generated and submitted to nphies, accelerating your revenue cycle."
+            />
+             <FeatureCard
+              icon={<ShieldCheck className="w-6 h-6" />}
+              title="SOC2+ & nphies Compliant"
+              description="Built on a secure AWS architecture with strict data controls and seamless integration with the Saudi national health platform."
+            />
+             <FeatureCard
+              icon={<ArrowRight className="w-6 h-6" />}
+              title="CDI 'Engage One' Nudges"
+              description="Proactively prompt clinicians for greater specificity at the point of documentation, eliminating retrospective queries."
+            />
+             <FeatureCard
+              icon={<FileText className="w-6 h-6" />}
+              title="APR-DRG & EAPG Support"
+              description="Our core logic is built to handle both inpatient (APR-DRG) and outpatient (EAPG) grouping requirements."
+            />
+          </div>
+        </section>
+      </main>
+      <footer className="text-center py-8 border-t">
+        <p className="text-muted-foreground">Built with ❤️ at Cloudflare</p>
       </footer>
-
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display">Ingest a Clinical Note</DialogTitle>
+            <DialogDescription>
+              Paste an unstructured clinical note below to see our AI in action. The system will suggest relevant codes in the coding workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="e.g., Patient presents with fever and cough. Chest X-ray confirms pneumonia..."
+              className="min-h-[200px] text-base"
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" onClick={handleAnalyze} className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white">
+              Analyze Note
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Toaster richColors closeButton />
     </div>
-  )
+  );
 }
