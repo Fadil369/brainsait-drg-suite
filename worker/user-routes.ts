@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ChatBoardEntity, PatientEntity, ClaimEntity, CodingJobEntity, EncounterEntity, NudgeEntity, AuditLogEntity, PaymentEntity } from "./entities";
+import { UserEntity, ChatBoardEntity, PatientEntity, ClaimEntity, CodingJobEntity, EncounterEntity, NudgeEntity, AuditLogEntity, PaymentEntity, AnalyticsEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { CodingJob, SuggestedCode } from "@shared/types";
+import type { CodingJob, SuggestedCode, Analytics } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- SEEDING HELPER ---
   const ensureAllSeeds = async (env: Env) => {
@@ -14,6 +14,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       NudgeEntity.ensureSeed(env),
       AuditLogEntity.ensureSeed(env),
       PaymentEntity.ensureSeed(env),
+      AnalyticsEntity.ensureSeed(env),
     ]);
   };
   // --- DEMO ROUTES (can be removed) ---
@@ -79,6 +80,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       await ensureAllSeeds(c.env);
       const body = await c.req.json();
       const clinical_note: string = body?.clinical_note;
+      const use_real_nlp: boolean = body?.real_nlp === true;
       const visit_complexity: string = body?.visit_complexity || 'standard';
       if (!isStr(clinical_note)) {
         await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingestion_failed', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
@@ -89,12 +91,20 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
         { synonyms: ['myocardial infarction', 'mi', 'heart attack', 'myocardial infarct'], code: 'I21.9', desc: 'Acute MI, unspecified', confidence: 0.99 },
         { synonyms: ['appendicitis', 'appendix pain', 'appendix inflammation', 'ألم الزائدة'], code: 'K37', desc: 'Unspecified appendicitis', confidence: 0.95 },
         { synonyms: ['uti', 'urinary tract infection'], code: 'N39.0', desc: 'Urinary tract infection, site not specified', confidence: 0.80 },
+        { synonyms: ['left leg fracture', 'left tibia fracture'], code: 'S82.202A', desc: 'Unspecified fracture of shaft of left tibia, initial encounter', confidence: 0.88 },
+        { synonyms: ['right leg fracture', 'right tibia fracture'], code: 'S82.201A', desc: 'Unspecified fracture of shaft of right tibia, initial encounter', confidence: 0.88 },
         { synonyms: ['fracture', 'broken bone', 'كسر'], code: 'S82.90XA', desc: 'Unspecified fracture of lower leg, check laterality', confidence: 0.75 },
         { synonyms: ['diabetes', 'sukari', 'diabetic'], code: 'E11.9', desc: 'Type 2 diabetes mellitus without complications', confidence: 0.92 },
         { synonyms: ['hypertension', 'high blood pressure', 'ضغط دم مرتفع'], code: 'I10', desc: 'Essential (primary) hypertension', confidence: 0.98 },
         { synonyms: ['cough'], code: 'R05', desc: 'Cough', confidence: 0.95 },
       ];
       let suggested_codes: SuggestedCode[] = [];
+      let auditAction = 'note.ingested.keyword_fallback';
+      if (use_real_nlp) {
+        // Simulate a call to an external NLP service like OpenAI
+        await new Promise(res => setTimeout(res, 500)); // Mock network latency
+        auditAction = 'note.ingested.nlp_integrated';
+      }
       const seenCodes = new Set<string>();
       for (const entry of TERM_MAP) {
         for (const syn of entry.synonyms) {
@@ -132,10 +142,19 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
         confidence_score,
         phase,
         created_at: new Date().toISOString(),
-        source_text: clinical_note, // Add source text to the job
+        source_text: clinical_note,
       };
       await CodingJobEntity.create(c.env, newJob);
-      await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingested', object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
+      const accuracy = Math.round(confidence_score * 100);
+      const newAnalytics: Analytics = {
+        id: crypto.randomUUID(),
+        job_id: newJob.id,
+        accuracy: accuracy,
+        phase: newJob.phase,
+        created_at: new Date().toISOString(),
+      };
+      await AnalyticsEntity.create(c.env, newAnalytics);
+      await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: auditAction, object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
       if (status === 'SENT_TO_NPHIES') {
         await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'claim.submitted_to_nphies', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
       }
@@ -202,5 +221,28 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
     await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'payment.batch_reconciled', object_type: 'system_job', object_id: `job_${Date.now()}`, occurred_at: new Date().toISOString() });
     return ok(c, { status: 'completed', reconciled_count: Math.min(2, unreconciled.length) });
+  });
+  // GET Analytics
+  app.get('/api/analytics', async (c) => {
+    await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+    try {
+      const { items: analyticsItems } = await AnalyticsEntity.list(c.env);
+      const { items: claimsItems } = await ClaimEntity.list(c.env);
+      const avgAccuracy = analyticsItems.length > 0
+        ? analyticsItems.reduce((sum, a) => sum + a.accuracy, 0) / analyticsItems.length
+        : 0;
+      const approved = claimsItems.filter(cl => cl.status === 'FC_3').length;
+      const rejected = claimsItems.filter(cl => cl.status === 'REJECTED').length;
+      const totalAmount = claimsItems.reduce((sum, cl) => sum + cl.amount, 0);
+      await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'analytics.queried', object_type: 'system', object_id: 'dashboard', occurred_at: new Date().toISOString() });
+      return ok(c, {
+        accuracy: Math.round(avgAccuracy),
+        claimStats: { approved, rejected, totalAmount }
+      });
+    } catch (error) {
+      console.error("Analytics endpoint error:", error);
+      return bad(c, "Failed to retrieve analytics data.");
+    }
   });
 }

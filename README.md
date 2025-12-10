@@ -1,4 +1,4 @@
-# BrainSAIT DRG Suite �� Saudi DRG Automation
+# BrainSAIT DRG Suite — Saudi DRG Automation
 [![[cloudflarebutton]]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})
 BrainSAIT DRG Suite is an enterprise-grade healthcare automation platform tailored for the Saudi Arabian market. It ingests unstructured clinical notes, leverages AI-driven logic to assign ICD-10 and DRG codes (APR-DRGs for inpatient and EAPGs for outpatient), and automates claims submission to the national nphies platform. Built with SOC 2+ compliance in mind, the system supports configurable workflows across three automation phases: Computer-Assisted Coding (CAC), Semi-Autonomous, and Autonomous. The architecture separates a secure Python FastAPI backend (hosted on AWS) from a visually stunning React frontend deployed at the edge via Cloudflare Workers for global performance and intuitive user experience.
 ## Key Features
@@ -37,22 +37,35 @@ BrainSAIT DRG Suite is an enterprise-grade healthcare automation platform tailor
     ```
     Wrangler will output the URL of your deployed application.
 ### Core Backend (AWS with Docker)
-The Python services (`cdi_api.py`, `coding_engine.py`, `nphies_connector.py`) are designed to run on AWS. A `docker-compose.yml` would be used for a complete local setup.
-1.  **Prerequisites**: Docker, AWS CLI.
-2.  **Build Docker Image**:
+The Python services are designed to run on AWS. Use the provided `docker-compose.yml` for local end-to-end testing.
+1.  **Build & Push to ECR**:
     ```bash
-    docker build -f docker/dev.Dockerfile -t brainsait-backend .
+    # Authenticate Docker with your AWS account
+    aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+    # Create an ECR repository
+    aws ecr create-repository --repository-name brainsait-api --region <region>
+    # Build, tag, and push the image
+    docker build -f docker/dev.Dockerfile -t <account-id>.dkr.ecr.<region>.amazonaws.com/brainsait-api:latest .
+    docker push <account-id>.dkr.ecr.<region>.amazonaws.com/brainsait-api:latest
     ```
-3.  **Run Locally (with mock services)**:
+2.  **Store Credentials in AWS Secrets Manager**:
     ```bash
-    docker run -p 8000:8000 -e NPHIES_CLIENT_ID="mock" -e NPHIES_CLIENT_SECRET="mock" brainsait-backend
+    aws secretsmanager create-secret --name nphies-creds \
+      --secret-string '{"client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET"}'
     ```
-4.  **Deploy to AWS**:
-    *   Push the Docker image to Amazon ECR.
-    *   Deploy the image as a service on Amazon ECS or Fargate.
-    *   Use AWS Secrets Manager to store `NPHIES_CLIENT_ID` and `NPHIES_CLIENT_SECRET`.
-    *   Connect the service to an AWS RDS PostgreSQL instance running the schema from `sql/schema.sql`.
-    *   Configure an Application Load Balancer (ALB) to handle traffic and enforce TLS 1.2.
+3.  **Deploy to Amazon ECS**:
+    *   Create an ECS Cluster.
+    *   Create a Task Definition that references your ECR image and injects the secrets from Secrets Manager.
+    *   Create a Service to run and maintain your tasks, connecting it to an Application Load Balancer (ALB) and an RDS PostgreSQL instance.
+## End-to-End Testing (Local)
+1.  **Start Services**: Run `docker-compose up --build`. This will start the FastAPI server, a PostgreSQL database, and a mock nphies server.
+2.  **Test CDI API**:
+    ```bash
+    curl -X POST http://localhost:8000/analyze_draft_note \
+      -H "Content-Type: application/json" \
+      -d '{"clinical_note": "Patient has pneumonia and a fracture."}'
+    ```
+3.  **Test Ingestion Flow**: Use the application frontend to ingest a note. Check the Docker logs for the `api` service to see the simulated NLP processing and FHIR payload generation.
 ## Troubleshooting
 - **Authentication Issues**: If login fails, check the mock credentials in `src/hooks/use-auth.ts`. Auth state is persisted in localStorage; clear it if issues persist.
 - **Data Not Loading**: The application uses a mock backend on Cloudflare Workers seeded from `shared/mock-data.ts`. If data is missing, the seeding process may have failed. The first visit to any data-driven page triggers the seed.
@@ -66,13 +79,7 @@ This application is built with SOC2 readiness in mind:
 ## API Reference
 The frontend interacts with a mock API backend running on Cloudflare Workers. Key endpoints include:
 - `GET /api/claims`: Fetches a paginated list of claims.
-- `GET /api/coding-jobs`: Fetches recent coding jobs.
 - `POST /api/ingest-note`: Submits a clinical note for analysis.
-  - **Body**: `{ "clinical_note": "..." }`
-  - **Returns**: A `CodingJob` object.
-- `POST /api/coding-jobs/:id/accept`: Marks a coding job's suggestions as accepted.
-- `GET /api/nudges`: Fetches a list of CDI nudges.
+- `GET /api/analytics`: Fetches aggregated dashboard metrics.
 - `GET /api/audit-logs`: Fetches system audit logs (admin only).
-- `GET /api/payments`: Fetches payment reconciliation data (admin only).
-- `POST /api/reconcile-batch`: Triggers a mock batch reconciliation job (admin only).
 [![[cloudflarebutton]]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})

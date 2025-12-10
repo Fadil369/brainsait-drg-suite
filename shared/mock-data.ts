@@ -1,4 +1,4 @@
-import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter, Nudge, AuditLog, Payment } from './types';
+import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter, Nudge, AuditLog, Payment, Analytics } from './types';
 export const MOCK_USERS: User[] = [
   { id: 'u1', name: 'User A' },
   { id: 'u2', name: 'User B' }
@@ -89,4 +89,11 @@ export const MOCK_PAYMENTS: Payment[] = [
     { id: 'pay2', claim_id: 'cl7', amount: 450.25, currency: 'SAR', reconciled: true, received_at: new Date(Date.now() - 86400000).toISOString() },
     { id: 'pay3', claim_id: 'cl2', amount: 850.00, currency: 'SAR', reconciled: false, received_at: new Date(Date.now() - 172800000).toISOString() },
     { id: 'pay4', claim_id: 'cl8', amount: 1500.00, currency: 'SAR', reconciled: false, received_at: new Date(Date.now() - 259200000).toISOString() },
+];
+export const MOCK_ANALYTICS: Analytics[] = [
+    { id: 'a1', job_id: 'job1', accuracy: 85, phase: 'CAC', created_at: new Date().toISOString() },
+    { id: 'a2', job_id: 'job2', accuracy: 99, phase: 'AUTONOMOUS', created_at: new Date().toISOString() },
+    { id: 'a3', job_id: 'job3', accuracy: 92, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+    { id: 'a4', job_id: 'job4', accuracy: 78, phase: 'CAC', created_at: new Date().toISOString() },
+    { id: 'a5', job_id: 'job5', accuracy: 81, phase: 'CAC', created_at: new Date().toISOString() },
 ];
