@@ -8,12 +8,13 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlayCircle, RefreshCw, Server, CheckCircle, AlertTriangle } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { PlayCircle, RefreshCw, Server } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { AuditLog } from '@shared/types';
 import { format } from 'date-fns';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 export function IntegrationConsole() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['integration-logs'],
@@ -29,16 +30,16 @@ export function IntegrationConsole() {
     }, 1000);
   };
   return (
-    <div className="min-h-screen w-full bg-muted/40">
-      <ThemeToggle className="fixed top-4 right-4 z-50" />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+        <Breadcrumbs />
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-display">BrainSAIT nphies Integration Console</CardTitle>
-              <CardDescription>Manage and monitor the BrainSAIT connection to the nphies platform.</CardDescription>
+              <CardTitle className="text-2xl font-display">nphies Integration Console</CardTitle>
+              <CardDescription>Manage and monitor the connection to the nphies platform.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-4 sm:p-6">
               <div className="flex items-center space-x-2">
                 <Switch id="sandbox-mode" defaultChecked />
                 <Label htmlFor="sandbox-mode">Sandbox Mode</Label>
@@ -63,7 +64,7 @@ export function IntegrationConsole() {
               <CardTitle>Endpoint Health Check</CardTitle>
               <CardDescription>Run live tests against the nphies sandbox endpoints.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               <Button onClick={() => handleTestEndpoint('Claims')}><PlayCircle className="mr-2 h-4 w-4" /> Test Claims</Button>
               <Button onClick={() => handleTestEndpoint('Pre-Auth')}><PlayCircle className="mr-2 h-4 w-4" /> Test Pre-Auth</Button>
               <Button onClick={() => handleTestEndpoint('Status Check')}><PlayCircle className="mr-2 h-4 w-4" /> Test Status Check</Button>
@@ -76,7 +77,7 @@ export function IntegrationConsole() {
               <CardDescription>A stream of recent API interactions and system events.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -116,8 +117,8 @@ export function IntegrationConsole() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
       <Toaster richColors closeButton />
-    </div>
+    </AppLayout>
   );
 }
