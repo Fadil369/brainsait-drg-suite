@@ -20,7 +20,7 @@ class AnalyzeResponse(BaseModel):
     nudges: List[Nudge]
     summary: str
 # --- CDI Rules Engine ---
-# A simple, deterministic ruleset for identifying common documentation gaps.
+# A comprehensive, deterministic ruleset for identifying common documentation gaps.
 # In a real system, this could be a more complex, configurable engine.
 CDI_RULES = [
     {
@@ -51,6 +51,76 @@ CDI_RULES = [
             "id": "fracture_laterality",
             "severity": "critical",
             "prompt": "Specify laterality (left, right) for the diagnosed 'fracture'.",
+        }
+    },
+    {
+        "id": "diabetes_type",
+        "keyword": "diabetes",
+        "negation_keywords": ["type 1", "type 2", "type i", "type ii", "gestational"],
+        "nudge": {
+            "id": "diabetes_type",
+            "severity": "warning",
+            "prompt": "Specify the type of diabetes (Type 1, Type 2, or gestational) and any complications.",
+        }
+    },
+    {
+        "id": "heart_failure_specificity",
+        "keyword": "heart failure",
+        "negation_keywords": ["systolic", "diastolic", "acute", "chronic", "left", "right"],
+        "nudge": {
+            "id": "heart_failure_specificity",
+            "severity": "warning",
+            "prompt": "Specify heart failure type (systolic/diastolic, acute/chronic) for accurate DRG assignment.",
+        }
+    },
+    {
+        "id": "copd_exacerbation",
+        "keyword": "copd",
+        "negation_keywords": ["exacerbation", "acute", "stable"],
+        "nudge": {
+            "id": "copd_exacerbation",
+            "severity": "warning",
+            "prompt": "Document whether COPD is stable or in acute exacerbation for proper severity coding.",
+        }
+    },
+    {
+        "id": "anemia_type",
+        "keyword": "anemia",
+        "negation_keywords": ["iron deficiency", "chronic disease", "hemolytic", "aplastic", "acute", "chronic"],
+        "nudge": {
+            "id": "anemia_type",
+            "severity": "info",
+            "prompt": "Specify the type and chronicity of anemia (e.g., iron deficiency, chronic disease).",
+        }
+    },
+    {
+        "id": "sepsis_severity",
+        "keyword": "sepsis",
+        "negation_keywords": ["severe", "septic shock", "organ dysfunction"],
+        "nudge": {
+            "id": "sepsis_severity",
+            "severity": "critical",
+            "prompt": "Document sepsis severity (severe sepsis, septic shock) and any organ dysfunction for accurate DRG.",
+        }
+    },
+    {
+        "id": "malnutrition_severity",
+        "keyword": "malnutrition",
+        "negation_keywords": ["mild", "moderate", "severe"],
+        "nudge": {
+            "id": "malnutrition_severity",
+            "severity": "warning",
+            "prompt": "Specify malnutrition severity (mild, moderate, severe) for accurate complication coding.",
+        }
+    },
+    {
+        "id": "stroke_type",
+        "keyword": "stroke",
+        "negation_keywords": ["ischemic", "hemorrhagic", "left", "right"],
+        "nudge": {
+            "id": "stroke_type",
+            "severity": "critical",
+            "prompt": "Specify stroke type (ischemic/hemorrhagic) and laterality for accurate diagnosis coding.",
         }
     }
 ]

@@ -26,12 +26,36 @@ class CodingEngine:
     """
     ENGINE_VERSION = "0.1.0-mock"
     # A simple dictionary to map clinical terms to ICD-10 codes
+    # Includes synonyms and Arabic transliterations for Saudi market
     TERM_TO_CODE_MAP = {
         "pneumonia": {"code": "J18.9", "desc": "Pneumonia, unspecified organism", "confidence": 0.85},
         "myocardial infarction": {"code": "I21.9", "desc": "Acute myocardial infarction, unspecified", "confidence": 0.99},
+        "mi": {"code": "I21.9", "desc": "Acute myocardial infarction, unspecified", "confidence": 0.99},
+        "heart attack": {"code": "I21.9", "desc": "Acute myocardial infarction, unspecified", "confidence": 0.99},
         "appendicitis": {"code": "K37", "desc": "Unspecified appendicitis", "confidence": 0.95},
         "uti": {"code": "N39.0", "desc": "Urinary tract infection, site not specified", "confidence": 0.80},
+        "urinary tract infection": {"code": "N39.0", "desc": "Urinary tract infection, site not specified", "confidence": 0.80},
         "fracture": {"code": "S82.90XA", "desc": "Unspecified fracture of unspecified lower leg, initial encounter", "confidence": 0.75},
+        # Diabetes synonyms and Arabic transliterations
+        "diabetes": {"code": "E11.9", "desc": "Type 2 diabetes mellitus without complications", "confidence": 0.90},
+        "sukari": {"code": "E11.9", "desc": "Type 2 diabetes mellitus without complications", "confidence": 0.90},
+        "dm": {"code": "E11.9", "desc": "Type 2 diabetes mellitus without complications", "confidence": 0.90},
+        "type 2 diabetes": {"code": "E11.9", "desc": "Type 2 diabetes mellitus without complications", "confidence": 0.95},
+        "type 1 diabetes": {"code": "E10.9", "desc": "Type 1 diabetes mellitus without complications", "confidence": 0.95},
+        # Hypertension synonyms
+        "hypertension": {"code": "I10", "desc": "Essential (primary) hypertension", "confidence": 0.92},
+        "htn": {"code": "I10", "desc": "Essential (primary) hypertension", "confidence": 0.92},
+        "high blood pressure": {"code": "I10", "desc": "Essential (primary) hypertension", "confidence": 0.92},
+        # Asthma
+        "asthma": {"code": "J45.909", "desc": "Unspecified asthma, uncomplicated", "confidence": 0.88},
+        "raboo": {"code": "J45.909", "desc": "Unspecified asthma, uncomplicated", "confidence": 0.88},
+        # COPD
+        "copd": {"code": "J44.9", "desc": "Chronic obstructive pulmonary disease, unspecified", "confidence": 0.90},
+        "chronic obstructive pulmonary disease": {"code": "J44.9", "desc": "Chronic obstructive pulmonary disease, unspecified", "confidence": 0.90},
+        # Stroke
+        "stroke": {"code": "I63.9", "desc": "Cerebral infarction, unspecified", "confidence": 0.93},
+        "cva": {"code": "I63.9", "desc": "Cerebral infarction, unspecified", "confidence": 0.93},
+        "cerebrovascular accident": {"code": "I63.9", "desc": "Cerebral infarction, unspecified", "confidence": 0.93},
     }
     def __init__(self, nphies_connector: Any = None):
         self.nphies_connector = nphies_connector or MockNphiesConnector()
