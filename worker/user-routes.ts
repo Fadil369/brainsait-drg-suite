@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ChatBoardEntity, PatientEntity, ClaimEntity, CodingJobEntity, EncounterEntity } from "./entities";
+import { UserEntity, ChatBoardEntity, PatientEntity, ClaimEntity, CodingJobEntity, EncounterEntity, NudgeEntity, AuditLogEntity, PaymentEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { CodingJob, SuggestedCode } from "@shared/types";
+import type { CodingJob, SuggestedCode, Nudge } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
   // USERS
@@ -70,6 +70,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       EncounterEntity.ensureSeed(env),
       ClaimEntity.ensureSeed(env),
       CodingJobEntity.ensureSeed(env),
+      NudgeEntity.ensureSeed(env),
+      AuditLogEntity.ensureSeed(env),
+      PaymentEntity.ensureSeed(env),
     ]);
   };
   // GET Claims (paginated and filterable)
@@ -130,5 +133,44 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     await CodingJobEntity.create(c.env, newJob);
     return ok(c, newJob);
+  });
+  // GET Nudges
+  app.get('/api/nudges', async (c) => {
+    await ensureAllSeeds(c.env);
+    const limit = Number(c.req.query('limit') ?? 10);
+    const cursor = c.req.query('cursor');
+    const page = await NudgeEntity.list(c.env, cursor, limit);
+    return ok(c, page);
+  });
+  // POST Apply Nudge (mock)
+  app.post('/api/nudges/:id/apply', async (c) => {
+    const nudgeId = c.req.param('id');
+    const nudge = new NudgeEntity(c.env, nudgeId);
+    if (!await nudge.exists()) return notFound(c, 'nudge not found');
+    await nudge.patch({ status: 'resolved' });
+    return ok(c, { id: nudgeId, status: 'resolved' });
+  });
+  // GET Audit Logs
+  app.get('/api/audit-logs', async (c) => {
+    await ensureAllSeeds(c.env);
+    const limit = Number(c.req.query('limit') ?? 10);
+    const cursor = c.req.query('cursor');
+    const page = await AuditLogEntity.list(c.env, cursor, limit);
+    // In a real app, you'd filter by date range from query params
+    return ok(c, page);
+  });
+  // GET Payments
+  app.get('/api/payments', async (c) => {
+    await ensureAllSeeds(c.env);
+    const limit = Number(c.req.query('limit') ?? 10);
+    const cursor = c.req.query('cursor');
+    const page = await PaymentEntity.list(c.env, cursor, limit);
+    return ok(c, page);
+  });
+  // POST Reconcile Batch (mock)
+  app.post('/api/reconcile-batch', async (c) => {
+    // This is a mock endpoint. In a real app, this would trigger a background job.
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing time
+    return ok(c, { status: 'completed', reconciled_count: 2 });
   });
 }

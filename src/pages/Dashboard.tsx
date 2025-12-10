@@ -6,28 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FilePlus2, AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { FilePlus2, AlertCircle, CheckCircle, Clock, FileText, Lightbulb, Scale } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
-import type { Claim, CodingJob } from '@shared/types';
+import type { Claim, CodingJob, Nudge } from '@shared/types';
 import { formatDistanceToNow } from 'date-fns';
-const StatCard = ({ title, value, icon, isLoading }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean }) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      {icon}
-    </CardHeader>
-    <CardContent>
-      {isLoading ? (
-        <Skeleton className="h-8 w-1/2" />
-      ) : (
-        <div className="text-2xl font-bold">{value}</div>
-      )}
-    </CardContent>
-  </Card>
-);
+const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string }) => {
+  const cardContent = (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Skeleton className="h-8 w-1/2" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+  return linkTo ? <Link to={linkTo}>{cardContent}</Link> : cardContent;
+};
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
     case 'FC_3': return 'default';
@@ -40,19 +42,24 @@ const getStatusVariant = (status: Claim['status']) => {
 };
 export function Dashboard() {
   const navigate = useNavigate();
-  const { data: claimsData, isLoading: isLoadingClaims, error: claimsError } = useQuery({
+  const { data: claimsData, isLoading: isLoadingClaims } = useQuery({
     queryKey: ['claims', { limit: 5 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 5 } }),
+    onError: () => toast.error('Failed to load claims data.'),
   });
-  const { data: jobsData, isLoading: isLoadingJobs, error: jobsError } = useQuery({
+  const { data: jobsData, isLoading: isLoadingJobs } = useQuery({
     queryKey: ['coding-jobs', { limit: 5 }],
     queryFn: () => api<{ items: CodingJob[] }>('/api/coding-jobs', { params: { limit: 5 } }),
+    onError: () => toast.error('Failed to load coding jobs.'),
   });
-  if (claimsError) toast.error('Failed to load claims data.');
-  if (jobsError) toast.error('Failed to load coding jobs.');
+  const { data: nudgesData, isLoading: isLoadingNudges } = useQuery({
+    queryKey: ['nudges'],
+    queryFn: () => api<{ items: Nudge[] }>('/api/nudges'),
+    onError: () => toast.error('Failed to load CDI nudges.'),
+  });
   const totalClaims = claimsData?.items.length ?? 0;
   const pendingJobs = jobsData?.items.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
-  const rejectedClaims = claimsData?.items.filter(c => c.status === 'REJECTED').length ?? 0;
+  const activeNudges = nudgesData?.items.filter(n => n.status === 'active').length ?? 0;
   return (
     <div className="min-h-screen w-full bg-muted/40">
       <ThemeToggle className="fixed top-4 right-4 z-50" />
@@ -67,9 +74,9 @@ export function Dashboard() {
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total Claims (Recent)" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} />
-          <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} />
-          <StatCard title="Rejected Claims" value={rejectedClaims} icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} />
+          <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
+          <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
+          <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
         </div>
         <div className="grid gap-8 md:grid-cols-2 mt-8">
           <Card>
@@ -112,29 +119,13 @@ export function Dashboard() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Pending Coding Jobs</CardTitle>
-              <CardDescription>Encounters awaiting manual review or processing.</CardDescription>
+              <CardTitle>Quick Access</CardTitle>
+              <CardDescription>Navigate to key system modules.</CardDescription>
             </CardHeader>
-            <CardContent>
-              {isLoadingJobs ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-                </div>
-              ) : jobsData?.items.length ? (
-                jobsData.items.map(job => (
-                  <div key={job.id} className="mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0">
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
-                    <div className="grid gap-1">
-                      <p className="text-sm font-medium leading-none">Encounter <span className="text-muted-foreground">{job.encounter_id}</span></p>
-                      <p className="text-sm text-muted-foreground">
-                        Phase: {job.phase} - Confidence: {(job.confidence_score * 100).toFixed(0)}%
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center">No pending jobs.</p>
-              )}
+            <CardContent className="grid grid-cols-1 gap-4">
+                <Link to="/cdi-nudges" className="w-full"><Button variant="outline" className="w-full justify-start"><Lightbulb className="mr-2 h-4 w-4" /> CDI Nudges Console</Button></Link>
+                <Link to="/audit-reconciliation" className="w-full"><Button variant="outline" className="w-full justify-start"><Scale className="mr-2 h-4 w-4" /> Audit & Reconciliation</Button></Link>
+                <Link to="/integration" className="w-full"><Button variant="outline" className="w-full justify-start"><CheckCircle className="mr-2 h-4 w-4" /> Integration Console</Button></Link>
             </CardContent>
           </Card>
         </div>

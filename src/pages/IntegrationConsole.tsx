@@ -8,13 +8,12 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlayCircle, RefreshCw, Server, Copy } from 'lucide-react';
+import { PlayCircle, RefreshCw, Server, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { AuditLog } from '@shared/types';
 import { format } from 'date-fns';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 export function IntegrationConsole() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['integration-logs'],
@@ -29,21 +28,17 @@ export function IntegrationConsole() {
       });
     }, 1000);
   };
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
-  };
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <Breadcrumbs />
+    <div className="min-h-screen w-full bg-muted/40">
+      <ThemeToggle className="fixed top-4 right-4 z-50" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <div className="space-y-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-display">nphies Integration Console</CardTitle>
               <CardDescription>Manage and monitor the connection to the nphies platform.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 p-4 sm:p-6">
+            <CardContent className="space-y-6">
               <div className="flex items-center space-x-2">
                 <Switch id="sandbox-mode" defaultChecked />
                 <Label htmlFor="sandbox-mode">Sandbox Mode</Label>
@@ -51,19 +46,13 @@ export function IntegrationConsole() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="client-id">OAuth Client ID</Label>
-                <div className="flex items-center gap-2">
-                  <Input id="client-id" value="**********" readOnly />
-                  <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_id_12345')}><Copy className="h-4 w-4" /></Button>
-                </div>
+                <Input id="client-id" value="**********" readOnly />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="client-secret">OAuth Client Secret</Label>
-                <div className="flex items-center gap-2">
-                  <Input id="client-secret" type="password" value="********************" readOnly />
-                  <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_secret_67890')}><Copy className="h-4 w-4" /></Button>
-                </div>
+                <Input id="client-secret" type="password" value="********************" readOnly />
               </div>
-              <Button variant="outline" className="active:scale-95 transition-transform">
+              <Button variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh Token
               </Button>
@@ -74,11 +63,11 @@ export function IntegrationConsole() {
               <CardTitle>Endpoint Health Check</CardTitle>
               <CardDescription>Run live tests against the nphies sandbox endpoints.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              <Button onClick={() => handleTestEndpoint('Claims')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Claims</Button>
-              <Button onClick={() => handleTestEndpoint('Pre-Auth')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Pre-Auth</Button>
-              <Button onClick={() => handleTestEndpoint('Status Check')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Status Check</Button>
-              <Button onClick={() => handleTestEndpoint('Payments')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Payments</Button>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Button onClick={() => handleTestEndpoint('Claims')}><PlayCircle className="mr-2 h-4 w-4" /> Test Claims</Button>
+              <Button onClick={() => handleTestEndpoint('Pre-Auth')}><PlayCircle className="mr-2 h-4 w-4" /> Test Pre-Auth</Button>
+              <Button onClick={() => handleTestEndpoint('Status Check')}><PlayCircle className="mr-2 h-4 w-4" /> Test Status Check</Button>
+              <Button onClick={() => handleTestEndpoint('Payments')}><PlayCircle className="mr-2 h-4 w-4" /> Test Payments</Button>
             </CardContent>
           </Card>
           <Card>
@@ -87,7 +76,7 @@ export function IntegrationConsole() {
               <CardDescription>A stream of recent API interactions and system events.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -107,7 +96,7 @@ export function IntegrationConsole() {
                       ))
                     ) : data?.items.length ? (
                       data.items.map((log) => (
-                        <TableRow key={log.id} className="even:bg-muted/30 hover:bg-muted/50">
+                        <TableRow key={log.id} className="hover:bg-muted/50">
                           <TableCell>{format(new Date(log.occurred_at), 'PPp')}</TableCell>
                           <TableCell><Badge variant="secondary">{log.actor}</Badge></TableCell>
                           <TableCell className="font-mono text-xs">{log.action}</TableCell>
@@ -127,8 +116,8 @@ export function IntegrationConsole() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
       <Toaster richColors closeButton />
-    </AppLayout>
+    </div>
   );
 }

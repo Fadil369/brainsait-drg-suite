@@ -7,13 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, X, Lightbulb } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Nudge } from '@shared/types';
 import { formatDistanceToNow } from 'date-fns';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { motion } from 'framer-motion';
 const getSeverityVariant = (severity: Nudge['severity']) => {
   switch (severity) {
     case 'critical': return 'destructive';
@@ -42,9 +40,9 @@ export function CDINudgesConsole() {
   if (error) toast.error('Failed to load CDI nudges.');
   const filteredNudges = data?.items.filter(nudge => statusFilter === 'all' || nudge.status === statusFilter) ?? [];
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <Breadcrumbs />
+    <div className="min-h-screen w-full bg-muted/40">
+      <ThemeToggle className="fixed top-4 right-4 z-50" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -53,7 +51,7 @@ export function CDINudgesConsole() {
                 <CardDescription>Review and action real-time Clinical Documentation Integrity prompts.</CardDescription>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -66,7 +64,7 @@ export function CDINudgesConsole() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -81,29 +79,25 @@ export function CDINudgesConsole() {
                   {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-6 w-20 animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-full animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16 animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto animate-pulse" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                       </TableRow>
                     ))
                   ) : filteredNudges.length > 0 ? (
                     filteredNudges.map((nudge) => (
                       <TableRow key={nudge.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <motion.div whileHover={{ scale: 1.05 }}>
-                            <Badge variant={getSeverityVariant(nudge.severity)}>{nudge.severity}</Badge>
-                          </motion.div>
-                        </TableCell>
-                        <TableCell className="font-medium max-w-[200px] sm:max-w-xs md:max-w-md truncate">{nudge.prompt}</TableCell>
+                        <TableCell><Badge variant={getSeverityVariant(nudge.severity)}>{nudge.severity}</Badge></TableCell>
+                        <TableCell className="font-medium">{nudge.prompt}</TableCell>
                         <TableCell className="text-muted-foreground">{nudge.encounter_id}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDistanceToNow(new Date(nudge.created_at), { addSuffix: true })}</TableCell>
                         <TableCell className="text-right space-x-1">
-                          <Button variant="ghost" size="sm" className="h-11 w-11" title="Apply Suggestion" onClick={() => applyNudgeMutation.mutate(nudge.id)} disabled={nudge.status !== 'active'}>
+                          <Button variant="ghost" size="icon" title="Apply Suggestion" onClick={() => applyNudgeMutation.mutate(nudge.id)} disabled={nudge.status !== 'active'}>
                             <Check className="h-4 w-4 text-green-600" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-11 w-11" title="Dismiss Nudge" disabled={nudge.status !== 'active'}>
+                          <Button variant="ghost" size="icon" title="Dismiss Nudge" disabled={nudge.status !== 'active'}>
                             <X className="h-4 w-4 text-red-600" />
                           </Button>
                         </TableCell>
@@ -122,8 +116,8 @@ export function CDINudgesConsole() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
       <Toaster richColors closeButton />
-    </AppLayout>
+    </div>
   );
 }

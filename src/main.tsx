@@ -15,6 +15,9 @@ import { HomePage } from '@/pages/HomePage'
 import { CodingWorkspace } from '@/pages/CodingWorkspace';
 import { Dashboard } from '@/pages/Dashboard';
 import { ClaimsManager } from '@/pages/ClaimsManager';
+import { CDINudgesConsole } from '@/pages/CDINudgesConsole';
+import { IntegrationConsole } from '@/pages/IntegrationConsole';
+import { AuditReconciliation } from '@/pages/AuditReconciliation';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -35,6 +38,21 @@ const router = createBrowserRouter([
   {
     path: "/coding-workspace",
     element: <CodingWorkspace />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/cdi-nudges",
+    element: <CDINudgesConsole />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/integration",
+    element: <IntegrationConsole />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/audit-reconciliation",
+    element: <AuditReconciliation />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);

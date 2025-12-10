@@ -55,3 +55,28 @@ export interface CodingJob {
   phase: 'CAC' | 'SEMI_AUTONOMOUS' | 'AUTONOMOUS';
   created_at: string; // ISO string
 }
+export interface Nudge {
+    id: string;
+    encounter_id: string;
+    severity: 'info' | 'warning' | 'critical';
+    prompt: string;
+    suggested_text?: string;
+    status: 'active' | 'resolved' | 'dismissed';
+    created_at: string; // ISO string
+}
+export interface AuditLog {
+    id: string;
+    actor: string;
+    action: string;
+    object_type: string;
+    object_id: string;
+    occurred_at: string; // ISO string
+}
+export interface Payment {
+    id: string;
+    claim_id: string;
+    amount: number;
+    currency: 'SAR';
+    reconciled: boolean;
+    received_at: string; // ISO string
+}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,22 +6,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Clock, Bot, FileArchive, ArrowUpDown } from 'lucide-react';
+import { CheckCircle, Clock, Bot, FileArchive } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Payment, AuditLog } from '@shared/types';
-import { format, formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-type SortKey = 'amount' | 'received_at';
-type SortDirection = 'asc' | 'desc';
+import { format } from 'date-fns';
 export function AuditReconciliation() {
   const queryClient = useQueryClient();
   const [isReconciling, setIsReconciling] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [sortKey, setSortKey] = useState<SortKey>('received_at');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const { data: paymentsData, isLoading: isLoadingPayments } = useQuery({
     queryKey: ['payments'],
     queryFn: () => api<{ items: Payment[] }>('/api/payments'),
@@ -36,116 +30,86 @@ export function AuditReconciliation() {
       toast.success('Batch reconciliation completed!');
       queryClient.invalidateQueries({ queryKey: ['payments'] });
     },
-    onError: () => toast.error('Batch reconciliation failed.'),
-    onSettled: () => setIsReconciling(false),
+    onError: () => {
+      toast.error('Batch reconciliation failed.');
+    },
+    onSettled: () => {
+      setIsReconciling(false);
+      setProgress(0);
+    },
   });
   const handleBatchReconcile = () => {
     setIsReconciling(true);
-    setProgress(0);
+    setProgress(10);
     const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return p + 10;
-      });
+      setProgress(p => (p < 90 ? p + 10 : p));
     }, 150);
     reconcileMutation.mutate();
+    setTimeout(() => clearInterval(interval), 1500);
   };
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDirection('desc');
-    }
-  };
-  const sortedPayments = useMemo(() => {
-    if (!paymentsData?.items) return [];
-    return [...paymentsData.items].sort((a, b) => {
-      const valA = sortKey === 'received_at' ? new Date(a.received_at).getTime() : a.amount;
-      const valB = sortKey === 'received_at' ? new Date(b.received_at).getTime() : b.amount;
-      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [paymentsData, sortKey, sortDirection]);
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <Breadcrumbs />
-        <div className="grid gap-4 sm:gap-8 lg:grid-cols-2">
+    <div className="min-h-screen w-full bg-muted/40">
+      <ThemeToggle className="fixed top-4 right-4 z-50" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+        <div className="grid gap-8 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Payments Reconciliation</CardTitle>
-                  <CardDescription>Match incoming payments to claims.</CardDescription>
+                  <CardDescription>Match incoming payments to submitted claims.</CardDescription>
                 </div>
-                <motion.div whileTap={{ scale: 0.95 }}>
-                  <Button onClick={handleBatchReconcile} disabled={isReconciling}>
-                    <Bot className="mr-2 h-4 w-4" />
-                    {isReconciling ? 'Reconciling...' : 'Run Batch'}
-                  </Button>
-                </motion.div>
+                <Button onClick={handleBatchReconcile} disabled={isReconciling}>
+                  <Bot className="mr-2 h-4 w-4" />
+                  {isReconciling ? 'Reconciling...' : 'Run Batch Reconciliation'}
+                </Button>
               </div>
-              {isReconciling && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
-                  <Progress value={progress} className="w-full h-2" />
-                </motion.div>
-              )}
+              {isReconciling && <Progress value={progress} className="w-full mt-4" />}
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim ID</TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('amount')}>
-                        <div className="flex items-center">Amount <ArrowUpDown className={`ml-2 h-4 w-4 transition-transform ${sortKey === 'amount' && sortDirection === 'desc' ? 'rotate-180' : ''}`} /></div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('received_at')}>
-                        <div className="flex items-center">Received <ArrowUpDown className={`ml-2 h-4 w-4 transition-transform ${sortKey === 'received_at' && sortDirection === 'desc' ? 'rotate-180' : ''}`} /></div>
-                      </TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingPayments ? (
-                      Array.from({ length: 4 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : sortedPayments.map(p => (
-                      <TableRow key={p.id} className="hover:bg-muted/50">
-                        <TableCell className="font-mono text-xs">{p.claim_id}</TableCell>
-                        <TableCell>SAR {p.amount.toLocaleString()}</TableCell>
-                        <TableCell>{format(new Date(p.received_at), 'PP')}</TableCell>
-                        <TableCell>
-                          <Badge variant={p.reconciled ? 'default' : 'secondary'}>
-                            {p.reconciled ? <CheckCircle className="mr-1 h-3 w-3" /> : <Clock className="mr-1 h-3 w-3" />}
-                            {p.reconciled ? 'Reconciled' : 'Pending'}
-                          </Badge>
-                        </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Claim ID</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Received</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingPayments ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    ))
+                  ) : paymentsData?.items.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{p.claim_id}</TableCell>
+                      <TableCell>SAR {p.amount.toLocaleString()}</TableCell>
+                      <TableCell>{format(new Date(p.received_at), 'PP')}</TableCell>
+                      <TableCell>
+                        <Badge variant={p.reconciled ? 'default' : 'secondary'}>
+                          {p.reconciled ? <CheckCircle className="mr-1 h-3 w-3" /> : <Clock className="mr-1 h-3 w-3" />}
+                          {p.reconciled ? 'Reconciled' : 'Pending'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle>System Audit Logs</CardTitle>
-              <CardDescription>A trail of system events for SOC2 compliance.</CardDescription>
+              <CardDescription>A general-purpose audit trail for SOC2 compliance.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 overflow-x-auto">
+              <div className="space-y-4">
                 {isLoadingAudits ? (
                   Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
                 ) : auditData?.items.map(log => (
@@ -162,8 +126,8 @@ export function AuditReconciliation() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
       <Toaster richColors closeButton />
-    </AppLayout>
+    </div>
   );
 }
