@@ -41,7 +41,7 @@ export function Login() {
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 h-10 w-10 rounded-lg bg-gradient-to-br from-[#0E5FFF] to-[#083e9e]" />
             <CardTitle className="text-2xl font-display">Welcome Back</CardTitle>
-            <CardDescription>Enter your credentials to access the Solventum Suite.</CardDescription>
+            <CardDescription>Enter your credentials to access the BrainSAIT Suite.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

@@ -45,7 +45,7 @@ export function ClaimsManager() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'claims_export.json';
+    a.download = 'brainsait-claims_export.json';
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Claims exported successfully.');
@@ -58,8 +58,8 @@ export function ClaimsManager() {
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-display">Claims Manager</CardTitle>
-                <CardDescription>Search, filter, and manage all claims.</CardDescription>
+                <CardTitle className="text-2xl font-display">BrainSAIT Claims Manager</CardTitle>
+                <CardDescription>Search, filter, and manage all claims in the BrainSAIT suite.</CardDescription>
               </div>
               <Button onClick={handleExport} variant="outline">
                 <Download className="mr-2 h-4 w-4" />

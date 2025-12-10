@@ -47,8 +47,8 @@ export function CDINudgesConsole() {
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-display">CDI Nudges Console</CardTitle>
-                <CardDescription>Review and action real-time Clinical Documentation Integrity prompts.</CardDescription>
+                <CardTitle className="text-2xl font-display">BrainSAIT CDI Nudges Console</CardTitle>
+                <CardDescription>Review and action real-time Clinical Documentation Integrity prompts in BrainSAIT.</CardDescription>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[180px]">
