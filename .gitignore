@@ -8,6 +8,9 @@ dist/
 # Cache files
 .eslintcache
 *.tsbuildinfo
+__pycache__/
+*.pyc
+*.pyo
 
 # Environment files
 .env
