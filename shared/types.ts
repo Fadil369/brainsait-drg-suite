@@ -55,6 +55,7 @@ export interface CodingJob {
   confidence_score: number;
   phase: 'CAC' | 'SEMI_AUTONOMOUS' | 'AUTONOMOUS';
   created_at: string; // ISO string
+  source_text?: string;
 }
 export interface Nudge {
     id: string;
