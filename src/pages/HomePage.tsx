@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BotMessageSquare, FileText, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
+import { BotMessageSquare, FileText, Zap, ShieldCheck, ArrowRight, Database, Settings, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -33,8 +33,6 @@ export function HomePage() {
     }
     setIsAnalyzing(true);
     try {
-      // This call "warms up" the backend and creates a new job.
-      // The dashboard will then reflect this new job.
       await api('/api/ingest-note', {
         method: 'POST',
         body: JSON.stringify({ clinical_note: noteText }),
@@ -42,7 +40,6 @@ export function HomePage() {
       toast.success("Note ingested successfully!", {
         description: "Redirecting to the dashboard to see the results."
       });
-      // Navigate to the dashboard to see the new job and overall status
       navigate('/dashboard');
     } catch (error) {
       toast.error("Failed to ingest note.", {
@@ -57,9 +54,21 @@ export function HomePage() {
     <div className="min-h-screen w-full bg-background text-foreground relative overflow-x-hidden">
       <ThemeToggle className="fixed top-4 right-4" />
       <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(#0E5FFF_1px,transparent_1px)] [background-size:32px_32px] opacity-20"></div>
+      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0E5FFF] to-[#083e9e]" />
+            <span className="text-lg font-bold font-display">Solventum</span>
+        </div>
+        <nav className="hidden md:flex items-center gap-4">
+            <Button variant="ghost" asChild><Link to="/dashboard">Dashboard</Link></Button>
+            <Button variant="ghost" asChild><Link to="/claims-manager">Claims</Link></Button>
+            <Button variant="ghost" asChild><Link to="/cdi-nudges">CDI Nudges</Link></Button>
+            <Button variant="ghost" asChild><Link to="/integration">Integration</Link></Button>
+            <Button variant="ghost" asChild><Link to="/audit-reconciliation">Audit</Link></Button>
+        </nav>
+      </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <section className="py-24 md:py-32 lg:py-40 text-center">
+        <section className="py-20 md:py-28 lg:py-32 text-center">
           <div className="animate-fade-in space-y-6">
             <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight bg-clip-text text-transparent bg-gradient-to-r from-[#0E5FFF] to-[#083e9e]">
               Solventum DRG Suite
@@ -85,45 +94,20 @@ export function HomePage() {
             </div>
           </div>
         </section>
-        {/* Features Section */}
         <section className="py-16 md:py-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-display">A Phased Journey to Automation</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-display">A Complete Revenue Cycle Platform</h2>
             <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-              From computer-assisted coding to full autonomy, our platform adapts to your workflow.
+              From clinical documentation to final payment reconciliation, all in one place.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<FileText className="w-6 h-6" />}
-              title="Computer-Assisted Coding (CAC)"
-              description="Our AI ingests clinical notes and suggests accurate ICD/DRG codes, reducing manual effort and improving coder consistency."
-            />
-            <FeatureCard
-              icon={<Zap className="w-6 h-6" />}
-              title="Semi-Autonomous Workflow"
-              description="High-confidence codes are automatically queued for batch review, freeing up your team to focus on complex cases."
-            />
-            <FeatureCard
-              icon={<BotMessageSquare className="w-6 h-6" />}
-              title="Fully Autonomous Submission"
-              description="For low-complexity visits with near-certainty scores, claims are automatically generated and submitted to nphies, accelerating your revenue cycle."
-            />
-             <FeatureCard
-              icon={<ShieldCheck className="w-6 h-6" />}
-              title="SOC2+ & nphies Compliant"
-              description="Built on a secure AWS architecture with strict data controls and seamless integration with the Saudi national health platform."
-            />
-             <FeatureCard
-              icon={<ArrowRight className="w-6 h-6" />}
-              title="CDI 'Engage One' Nudges"
-              description="Proactively prompt clinicians for greater specificity at the point of documentation, eliminating retrospective queries."
-            />
-             <FeatureCard
-              icon={<FileText className="w-6 h-6" />}
-              title="APR-DRG & EAPG Support"
-              description="Our core logic is built to handle both inpatient (APR-DRG) and outpatient (EAPG) grouping requirements."
-            />
+            <FeatureCard icon={<Zap className="w-6 h-6" />} title="AI-Powered Coding" description="Automate ICD/DRG assignment with our three-phase engine: CAC, Semi-Autonomous, and Fully Autonomous." />
+            <FeatureCard icon={<ArrowRight className="w-6 h-6" />} title="CDI 'Engage One' Nudges" description="Proactively prompt clinicians for greater specificity at the point of documentation, eliminating retrospective queries." />
+            <FeatureCard icon={<ShieldCheck className="w-6 h-6" />} title="nphies Integration" description="Seamlessly submit claims, check statuses, and manage pre-authorizations with our secure, compliant connector." />
+            <FeatureCard icon={<Database className="w-6 h-6" />} title="Claims Management" description="A centralized console to track, filter, and manage the entire lifecycle of your claims." />
+            <FeatureCard icon={<Scale className="w-6 h-6" />} title="Audit & Reconciliation" description="Streamline payment posting and reconciliation with robust audit trails for SOC2 compliance." />
+            <FeatureCard icon={<Settings className="w-6 h-6" />} title="SOC2+ Architecture" description="Built on a secure AWS backend with strict data controls, encryption, and monitoring." />
           </div>
         </section>
       </main>
@@ -135,7 +119,7 @@ export function HomePage() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-display">Ingest a Clinical Note</DialogTitle>
             <DialogDescription>
-              Paste an unstructured clinical note below to see our AI in action. The system will suggest relevant codes in the coding workspace.
+              Paste an unstructured clinical note below. The system will create a coding job and you'll be redirected to the dashboard.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

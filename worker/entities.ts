@@ -2,8 +2,8 @@
  * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
  */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS, MOCK_PATIENTS, MOCK_CLAIMS, MOCK_CODING_JOBS, MOCK_ENCOUNTERS } from "@shared/mock-data";
+import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter, Nudge, AuditLog, Payment } from "@shared/types";
+import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS, MOCK_PATIENTS, MOCK_CLAIMS, MOCK_CODING_JOBS, MOCK_ENCOUNTERS, MOCK_NUDGES, MOCK_AUDIT_LOGS, MOCK_PAYMENTS } from "@shared/mock-data";
 // USER ENTITY: one DO instance per user
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
@@ -56,4 +56,22 @@ export class CodingJobEntity extends IndexedEntity<CodingJob> {
   static readonly indexName = "coding_jobs";
   static readonly initialState: CodingJob = { id: "", encounter_id: "", suggested_codes: [], status: "NEEDS_REVIEW", confidence_score: 0, phase: "CAC", created_at: "" };
   static seedData = MOCK_CODING_JOBS;
+}
+export class NudgeEntity extends IndexedEntity<Nudge> {
+    static readonly entityName = "nudge";
+    static readonly indexName = "nudges";
+    static readonly initialState: Nudge = { id: "", encounter_id: "", severity: "info", prompt: "", status: "active", created_at: "" };
+    static seedData = MOCK_NUDGES;
+}
+export class AuditLogEntity extends IndexedEntity<AuditLog> {
+    static readonly entityName = "audit_log";
+    static readonly indexName = "audit_logs";
+    static readonly initialState: AuditLog = { id: "", actor: "", action: "", object_type: "", object_id: "", occurred_at: "" };
+    static seedData = MOCK_AUDIT_LOGS;
+}
+export class PaymentEntity extends IndexedEntity<Payment> {
+    static readonly entityName = "payment";
+    static readonly indexName = "payments";
+    static readonly initialState: Payment = { id: "", claim_id: "", amount: 0, currency: "SAR", reconciled: false, received_at: "" };
+    static seedData = MOCK_PAYMENTS;
 }

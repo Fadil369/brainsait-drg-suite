@@ -1,4 +1,4 @@
-import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter } from './types';
+import type { User, Chat, ChatMessage, Patient, Claim, CodingJob, Encounter, Nudge, AuditLog, Payment } from './types';
 export const MOCK_USERS: User[] = [
   { id: 'u1', name: 'User A' },
   { id: 'u2', name: 'User B' }
@@ -45,4 +45,24 @@ export const MOCK_CODING_JOBS: CodingJob[] = [
   { id: 'job6', encounter_id: 'e1', suggested_codes: [], status: 'NEEDS_REVIEW', confidence_score: 0, phase: 'CAC', created_at: new Date().toISOString() },
   { id: 'job7', encounter_id: 'e2', suggested_codes: [{ code: 'R05', desc: 'Cough', confidence: 0.95 }], status: 'AUTO_DROP', confidence_score: 0.95, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
   { id: 'job8', encounter_id: 'e3', suggested_codes: [{ code: 'R50.9', desc: 'Fever, unspecified', confidence: 0.98 }], status: 'AUTO_DROP', confidence_score: 0.98, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+];
+export const MOCK_NUDGES: Nudge[] = [
+    { id: 'n1', encounter_id: 'e1', severity: 'warning', prompt: "Specify the causative organism for 'pneumonia' if known.", status: 'active', created_at: new Date().toISOString() },
+    { id: 'n2', encounter_id: 'e4', severity: 'critical', prompt: "Specify laterality (left, right) for the diagnosed 'fracture'.", status: 'active', created_at: new Date().toISOString() },
+    { id: 'n3', encounter_id: 'e5', severity: 'info', prompt: "Consider documenting if UTI is catheter-associated.", status: 'active', created_at: new Date().toISOString() },
+    { id: 'n4', encounter_id: 'e2', severity: 'warning', prompt: "Specify type of Myocardial Infarction (e.g., STEMI, NSTEMI).", status: 'resolved', created_at: new Date(Date.now() - 86400000).toISOString() },
+    { id: 'n5', encounter_id: 'e3', severity: 'warning', prompt: "Clarify if appendicitis is with or without perforation.", status: 'dismissed', created_at: new Date(Date.now() - 172800000).toISOString() },
+];
+export const MOCK_AUDIT_LOGS: AuditLog[] = [
+    { id: 'al1', actor: 'system', action: 'claim.submitted', object_type: 'claim', object_id: 'cl2', occurred_at: new Date().toISOString() },
+    { id: 'al2', actor: 'user:coder@hospital.sa', action: 'coding_job.reviewed', object_type: 'coding_job', object_id: 'job1', occurred_at: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'al3', actor: 'system', action: 'nphies.token_refreshed', object_type: 'integration', object_id: 'nphies', occurred_at: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'al4', actor: 'system', action: 'claim.status_updated', object_type: 'claim', object_id: 'cl3', occurred_at: new Date(Date.now() - 10800000).toISOString() },
+    { id: 'al5', actor: 'user:admin@solventum.sa', action: 'user.login', object_type: 'user', object_id: 'admin@solventum.sa', occurred_at: new Date(Date.now() - 14400000).toISOString() },
+];
+export const MOCK_PAYMENTS: Payment[] = [
+    { id: 'pay1', claim_id: 'cl1', amount: 12500.50, currency: 'SAR', reconciled: true, received_at: new Date().toISOString() },
+    { id: 'pay2', claim_id: 'cl7', amount: 450.25, currency: 'SAR', reconciled: true, received_at: new Date(Date.now() - 86400000).toISOString() },
+    { id: 'pay3', claim_id: 'cl2', amount: 850.00, currency: 'SAR', reconciled: false, received_at: new Date(Date.now() - 172800000).toISOString() },
+    { id: 'pay4', claim_id: 'cl8', amount: 1500.00, currency: 'SAR', reconciled: false, received_at: new Date(Date.now() - 259200000).toISOString() },
 ];
