@@ -12,12 +12,24 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
-import { CodingWorkspace } from '@/pages/CodingWorkspace'; // Import the new page
+import { CodingWorkspace } from '@/pages/CodingWorkspace';
+import { Dashboard } from '@/pages/Dashboard';
+import { ClaimsManager } from '@/pages/ClaimsManager';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/claims-manager",
+    element: <ClaimsManager />,
     errorElement: <RouteErrorBoundary />,
   },
   {
