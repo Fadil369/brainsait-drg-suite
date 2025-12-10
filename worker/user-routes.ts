@@ -2,15 +2,24 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, PatientEntity, ClaimEntity, CodingJobEntity, EncounterEntity, NudgeEntity, AuditLogEntity, PaymentEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { CodingJob, SuggestedCode, Nudge } from "@shared/types";
+import type { CodingJob, SuggestedCode } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
-  // USERS
+  // --- SEEDING HELPER ---
+  const ensureAllSeeds = async (env: Env) => {
+    await Promise.all([
+      PatientEntity.ensureSeed(env),
+      EncounterEntity.ensureSeed(env),
+      ClaimEntity.ensureSeed(env),
+      CodingJobEntity.ensureSeed(env),
+      NudgeEntity.ensureSeed(env),
+      AuditLogEntity.ensureSeed(env),
+      PaymentEntity.ensureSeed(env),
+    ]);
+  };
+  // --- DEMO ROUTES (can be removed) ---
   app.get('/api/users', async (c) => {
     await UserEntity.ensureSeed(c.env);
-    const cq = c.req.query('cursor');
-    const lq = c.req.query('limit');
-    const page = await UserEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
+    const page = await UserEntity.list(c.env, c.req.query('cursor') ?? null, 10);
     return ok(c, page);
   });
   app.post('/api/users', async (c) => {
@@ -18,12 +27,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!name?.trim()) return bad(c, 'name required');
     return ok(c, await UserEntity.create(c.env, { id: crypto.randomUUID(), name: name.trim() }));
   });
-  // CHATS
   app.get('/api/chats', async (c) => {
     await ChatBoardEntity.ensureSeed(c.env);
-    const cq = c.req.query('cursor');
-    const lq = c.req.query('limit');
-    const page = await ChatBoardEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
+    const page = await ChatBoardEntity.list(c.env, c.req.query('cursor') ?? null, 10);
     return ok(c, page);
   });
   app.post('/api/chats', async (c) => {
@@ -32,7 +38,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const created = await ChatBoardEntity.create(c.env, { id: crypto.randomUUID(), title: title.trim(), messages: [] });
     return ok(c, { id: created.id, title: created.title });
   });
-  // MESSAGES
   app.get('/api/chats/:chatId/messages', async (c) => {
     const chat = new ChatBoardEntity(c.env, c.req.param('chatId'));
     if (!await chat.exists()) return notFound(c, 'chat not found');
@@ -46,48 +51,22 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!await chat.exists()) return notFound(c, 'chat not found');
     return ok(c, await chat.sendMessage(userId, text.trim()));
   });
-  // DELETE: Users
-  app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));
-  app.post('/api/users/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await UserEntity.deleteMany(c.env, list), ids: list });
-  });
-  // DELETE: Chats
-  app.delete('/api/chats/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await ChatBoardEntity.delete(c.env, c.req.param('id')) }));
-  app.post('/api/chats/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await ChatBoardEntity.deleteMany(c.env, list), ids: list });
-  });
   // --- SOLVENTUM DRG SUITE ROUTES ---
-  // Ensure all seed data is present
-  const ensureAllSeeds = async (env: Env) => {
-    await Promise.all([
-      PatientEntity.ensureSeed(env),
-      EncounterEntity.ensureSeed(env),
-      ClaimEntity.ensureSeed(env),
-      CodingJobEntity.ensureSeed(env),
-      NudgeEntity.ensureSeed(env),
-      AuditLogEntity.ensureSeed(env),
-      PaymentEntity.ensureSeed(env),
-    ]);
-  };
   // GET Claims (paginated and filterable)
   app.get('/api/claims', async (c) => {
     await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=60');
     const status = c.req.query('status');
     const limit = Number(c.req.query('limit') ?? 10);
     const cursor = c.req.query('cursor');
-    const { items, next } = await ClaimEntity.list(c.env, cursor, limit);
-    const filteredItems = status ? items.filter(claim => claim.status === status) : items;
-    return ok(c, { items: filteredItems, next });
+    const { items, next } = await ClaimEntity.list(c.env, cursor, limit * 2); // Fetch more to filter
+    const filteredItems = status && status !== 'all' ? items.filter(claim => claim.status === status) : items;
+    return ok(c, { items: filteredItems.slice(0, limit), next });
   });
   // GET Coding Jobs (paginated)
   app.get('/api/coding-jobs', async (c) => {
     await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=60');
     const limit = Number(c.req.query('limit') ?? 5);
     const cursor = c.req.query('cursor');
     const page = await CodingJobEntity.list(c.env, cursor, limit);
@@ -97,29 +76,16 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.post('/api/ingest-note', async (c) => {
     const { clinical_note } = (await c.req.json()) as { clinical_note?: string };
     if (!isStr(clinical_note)) return bad(c, 'clinical_note is required');
-    // Mock NLP
     const noteLower = clinical_note.toLowerCase();
     const suggested_codes: SuggestedCode[] = [];
-    if (noteLower.includes('pneumonia')) {
-      suggested_codes.push({ code: 'J18.9', desc: 'Pneumonia, unspecified', confidence: 0.85 });
-    }
-    if (noteLower.includes('myocardial infarction')) {
-        suggested_codes.push({ code: 'I21.9', desc: 'Acute MI, unspecified', confidence: 0.99 });
-    }
-    if (noteLower.includes('cough')) {
-        suggested_codes.push({ code: 'R05', desc: 'Cough', confidence: 0.95 });
-    }
+    if (noteLower.includes('pneumonia')) suggested_codes.push({ code: 'J18.9', desc: 'Pneumonia, unspecified', confidence: 0.85 });
+    if (noteLower.includes('myocardial infarction')) suggested_codes.push({ code: 'I21.9', desc: 'Acute MI, unspecified', confidence: 0.99 });
+    if (noteLower.includes('cough')) suggested_codes.push({ code: 'R05', desc: 'Cough', confidence: 0.95 });
     const confidence_score = suggested_codes.length > 0 ? suggested_codes.reduce((acc, code) => acc + code.confidence, 0) / suggested_codes.length : 0;
     let phase: CodingJob['phase'] = 'CAC';
     let status: CodingJob['status'] = 'NEEDS_REVIEW';
-    if (confidence_score > 0.98) {
-        phase = 'AUTONOMOUS';
-        status = 'SENT_TO_NPHIES';
-    } else if (confidence_score > 0.90) {
-        phase = 'SEMI_AUTONOMOUS';
-        status = 'AUTO_DROP';
-    }
-    // Create a mock encounter to link the job to
+    if (confidence_score > 0.98) { phase = 'AUTONOMOUS'; status = 'SENT_TO_NPHIES'; } 
+    else if (confidence_score > 0.90) { phase = 'SEMI_AUTONOMOUS'; status = 'AUTO_DROP'; }
     const encounters = await EncounterEntity.list(c.env, null, 1);
     const encounter_id = encounters.items.length > 0 ? encounters.items[0].id : 'e_mock';
     const newJob: CodingJob = {
@@ -132,11 +98,13 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       created_at: new Date().toISOString(),
     };
     await CodingJobEntity.create(c.env, newJob);
+    await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingested', object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
     return ok(c, newJob);
   });
   // GET Nudges
   app.get('/api/nudges', async (c) => {
     await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=120');
     const limit = Number(c.req.query('limit') ?? 10);
     const cursor = c.req.query('cursor');
     const page = await NudgeEntity.list(c.env, cursor, limit);
@@ -148,20 +116,31 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const nudge = new NudgeEntity(c.env, nudgeId);
     if (!await nudge.exists()) return notFound(c, 'nudge not found');
     await nudge.patch({ status: 'resolved' });
+    await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'user:mock_user', action: 'nudge.applied', object_type: 'nudge', object_id: nudgeId, occurred_at: new Date().toISOString() });
     return ok(c, { id: nudgeId, status: 'resolved' });
   });
   // GET Audit Logs
   app.get('/api/audit-logs', async (c) => {
     await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=30');
     const limit = Number(c.req.query('limit') ?? 10);
     const cursor = c.req.query('cursor');
     const page = await AuditLogEntity.list(c.env, cursor, limit);
-    // In a real app, you'd filter by date range from query params
     return ok(c, page);
+  });
+  // GET Integration Logs (filtered audit logs)
+  app.get('/api/integration-logs', async (c) => {
+    await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=30');
+    const { items } = await AuditLogEntity.list(c.env, null, 50);
+    const integrationActions = ['nphies.token_refreshed', 'claim.submitted_to_nphies'];
+    const filtered = items.filter(log => integrationActions.includes(log.action) || log.object_type === 'integration');
+    return ok(c, { items: filtered.slice(0, 10) });
   });
   // GET Payments
   app.get('/api/payments', async (c) => {
     await ensureAllSeeds(c.env);
+    c.header('Cache-Control', 'public, max-age=120');
     const limit = Number(c.req.query('limit') ?? 10);
     const cursor = c.req.query('cursor');
     const page = await PaymentEntity.list(c.env, cursor, limit);
@@ -169,8 +148,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
   // POST Reconcile Batch (mock)
   app.post('/api/reconcile-batch', async (c) => {
-    // This is a mock endpoint. In a real app, this would trigger a background job.
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing time
-    return ok(c, { status: 'completed', reconciled_count: 2 });
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const { items } = await PaymentEntity.list(c.env);
+    const unreconciled = items.filter(p => !p.reconciled);
+    for (const payment of unreconciled.slice(0, 2)) { // Reconcile up to 2
+        const pEntity = new PaymentEntity(c.env, payment.id);
+        await pEntity.patch({ reconciled: true });
+    }
+    await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'payment.batch_reconciled', object_type: 'system_job', object_id: `job_${Date.now()}`, occurred_at: new Date().toISOString() });
+    return ok(c, { status: 'completed', reconciled_count: Math.min(2, unreconciled.length) });
   });
 }

@@ -18,7 +18,16 @@ import { ClaimsManager } from '@/pages/ClaimsManager';
 import { CDINudgesConsole } from '@/pages/CDINudgesConsole';
 import { IntegrationConsole } from '@/pages/IntegrationConsole';
 import { AuditReconciliation } from '@/pages/AuditReconciliation';
-const queryClient = new QueryClient();
+import { Login } from '@/pages/Login';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+    },
+  },
+});
 const router = createBrowserRouter([
   {
     path: "/",
@@ -26,33 +35,38 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
   {
+    path: "/login",
+    element: <Login />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
     path: "/dashboard",
-    element: <Dashboard />,
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/claims-manager",
-    element: <ClaimsManager />,
+    element: <ProtectedRoute><ClaimsManager /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/coding-workspace",
-    element: <CodingWorkspace />,
+    element: <ProtectedRoute><CodingWorkspace /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/cdi-nudges",
-    element: <CDINudgesConsole />,
+    element: <ProtectedRoute><CDINudgesConsole /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/integration",
-    element: <IntegrationConsole />,
+    element: <ProtectedRoute adminOnly={true}><IntegrationConsole /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/audit-reconciliation",
-    element: <AuditReconciliation />,
+    element: <ProtectedRoute adminOnly={true}><AuditReconciliation /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
 ]);
