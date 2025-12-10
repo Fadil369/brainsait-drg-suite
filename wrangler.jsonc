@@ -4,7 +4,7 @@
  */
  {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "vite-cf-do-runner",
+	"name": "solventum-drg-suite-lwsb-xgwrw12cfreedylv",
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-04-24",
 	"assets": {
