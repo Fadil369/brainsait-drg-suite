@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FilePlus2, AlertCircle, CheckCircle, Clock, FileText, Lightbulb, Scale } from 'lucide-react';
+import { FilePlus2, Clock, FileText, Lightbulb, Scale, Settings } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Claim, CodingJob, Nudge } from '@shared/types';
-import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 const StatCard = ({ title, value, icon, isLoading, linkTo }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string }) => {
   const cardContent = (
     <Card className="hover:shadow-lg transition-shadow">
@@ -42,38 +42,41 @@ const getStatusVariant = (status: Claim['status']) => {
 };
 export function Dashboard() {
   const navigate = useNavigate();
-  const { data: claimsData, isLoading: isLoadingClaims } = useQuery({
+  const user = useAuth(s => s.user);
+  const logout = useAuth(s => s.logout);
+  const { data: claimsData, isLoading: isLoadingClaims, error: claimsError } = useQuery({
     queryKey: ['claims', { limit: 5 }],
     queryFn: () => api<{ items: Claim[] }>('/api/claims', { params: { limit: 5 } }),
-    onError: () => toast.error('Failed to load claims data.'),
   });
-  const { data: jobsData, isLoading: isLoadingJobs } = useQuery({
+  const { data: jobsData, isLoading: isLoadingJobs, error: jobsError } = useQuery({
     queryKey: ['coding-jobs', { limit: 5 }],
     queryFn: () => api<{ items: CodingJob[] }>('/api/coding-jobs', { params: { limit: 5 } }),
-    onError: () => toast.error('Failed to load coding jobs.'),
   });
-  const { data: nudgesData, isLoading: isLoadingNudges } = useQuery({
+  const { data: nudgesData, isLoading: isLoadingNudges, error: nudgesError } = useQuery({
     queryKey: ['nudges'],
     queryFn: () => api<{ items: Nudge[] }>('/api/nudges'),
-    onError: () => toast.error('Failed to load CDI nudges.'),
   });
-  const totalClaims = claimsData?.items.length ?? 0;
-  const pendingJobs = jobsData?.items.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
-  const activeNudges = nudgesData?.items.filter(n => n.status === 'active').length ?? 0;
+  if (claimsError) toast.error('Failed to load claims data.');
+  if (jobsError) toast.error('Failed to load coding jobs.');
+  if (nudgesError) toast.error('Failed to load CDI nudges.');
+  const totalClaims = claimsData?.items?.length ?? 0;
+  const pendingJobs = jobsData?.items?.filter(j => j.status === 'NEEDS_REVIEW').length ?? 0;
+  const activeNudges = nudgesData?.items?.filter(n => n.status === 'active').length ?? 0;
   return (
     <div className="min-h-screen w-full bg-muted/40">
       <ThemeToggle className="fixed top-4 right-4 z-50" />
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-4">
         <h1 className="text-2xl font-bold font-display">Dashboard</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button asChild variant="outline"><Link to="/claims-manager">Claims Manager</Link></Button>
+          <span className="text-sm text-muted-foreground hidden sm:inline">Welcome, {user?.username}!</span>
+          <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
           <Button className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white" onClick={() => navigate('/')}>
-            <FilePlus2 className="mr-2 h-4 w-4" /> Ingest New Note
+            <FilePlus2 className="mr-2 h-4 w-4" /> Ingest Note
           </Button>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <StatCard title="Recent Claims" value={totalClaims} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingClaims} linkTo="/claims-manager" />
           <StatCard title="Pending Coding Jobs" value={pendingJobs} icon={<Clock className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingJobs} linkTo="/coding-workspace" />
           <StatCard title="Active CDI Nudges" value={activeNudges} icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />} isLoading={isLoadingNudges} linkTo="/cdi-nudges" />
@@ -102,7 +105,7 @@ export function Dashboard() {
                         <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                       </TableRow>
                     ))
-                  ) : claimsData?.items.length ? (
+                  ) : claimsData?.items && claimsData.items.length > 0 ? (
                     claimsData.items.map(claim => (
                       <TableRow key={claim.id}>
                         <TableCell className="font-medium">{claim.claim_number}</TableCell>
@@ -123,9 +126,13 @@ export function Dashboard() {
               <CardDescription>Navigate to key system modules.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4">
-                <Link to="/cdi-nudges" className="w-full"><Button variant="outline" className="w-full justify-start"><Lightbulb className="mr-2 h-4 w-4" /> CDI Nudges Console</Button></Link>
-                <Link to="/audit-reconciliation" className="w-full"><Button variant="outline" className="w-full justify-start"><Scale className="mr-2 h-4 w-4" /> Audit & Reconciliation</Button></Link>
-                <Link to="/integration" className="w-full"><Button variant="outline" className="w-full justify-start"><CheckCircle className="mr-2 h-4 w-4" /> Integration Console</Button></Link>
+                <Button variant="outline" className="w-full justify-start" asChild><Link to="/cdi-nudges"><Lightbulb className="mr-2 h-4 w-4" /> CDI Nudges Console</Link></Button>
+                {user?.role === 'admin' && (
+                  <>
+                    <Button variant="outline" className="w-full justify-start" asChild><Link to="/audit-reconciliation"><Scale className="mr-2 h-4 w-4" /> Audit & Reconciliation</Link></Button>
+                    <Button variant="outline" className="w-full justify-start" asChild><Link to="/integration"><Settings className="mr-2 h-4 w-4" /> Integration Console</Link></Button>
+                  </>
+                )}
             </CardContent>
           </Card>
         </div>

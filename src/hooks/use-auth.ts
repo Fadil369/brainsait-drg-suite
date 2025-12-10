@@ -14,7 +14,6 @@ interface AuthState {
 const MOCK_USERS: Record<string, { pass: string; role: 'admin' | 'coder' }> = {
   'admin': { pass: 'password', role: 'admin' },
   'coder': { pass: 'password', role: 'coder' },
-  'superadmin': { pass: 'password123', role: 'admin' },
 };
 export const useAuth = create<AuthState>()(
   persist(
