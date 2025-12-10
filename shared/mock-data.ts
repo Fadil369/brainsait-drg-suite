@@ -10,6 +10,23 @@ export const MOCK_CHAT_MESSAGES: ChatMessage[] = [
   { id: 'm1', chatId: 'c1', userId: 'u1', text: 'Hello', ts: Date.now() },
 ];
 // --- SOLVENTUM MOCK DATA ---
+export const MOCK_CLINICAL_NOTES: string[] = [
+    "Patient with sukari symptoms, no complications noted.",
+    "High blood pressure diagnosed, ضغط دم مرتفع controlled with medication.",
+    "Appendix pain and inflammation, suspected appendicitis.",
+    "Left leg fracture after fall, كسر in tibia.",
+    "Low-complexity outpatient visit for fever and cough.",
+    "Pneumonia with bacterial organism suspected. سعال شديد reported.",
+    "UTI with catheter association.",
+    "Myocardial infarction STEMI confirmed.",
+    "Hypertension crisis, I10 code needed.",
+    "Diabetes type 2, E11.9 unspecified.",
+    "Patient presents with classic signs of acute myocardial infarction. EKG confirms.",
+    "Diagnosis of appendicitis confirmed by imaging. ألم الزائدة is severe.",
+    "Patient complains of cough and fever. Suspected pneumonia.",
+    "Patient is a known diabetic and presents for routine checkup.",
+    "Routine check for high blood pressure."
+];
 export const MOCK_PATIENTS: Patient[] = [
   { id: 'p1', national_id: '1012345678', given_name: 'Fatima', family_name: 'Al-Fahad' },
   { id: 'p2', national_id: '1023456789', given_name: 'Mohammed', family_name: 'Al-Ghamdi' },
@@ -45,6 +62,13 @@ export const MOCK_CODING_JOBS: CodingJob[] = [
   { id: 'job6', encounter_id: 'e1', suggested_codes: [], status: 'NEEDS_REVIEW', confidence_score: 0, phase: 'CAC', created_at: new Date().toISOString() },
   { id: 'job7', encounter_id: 'e2', suggested_codes: [{ code: 'R05', desc: 'Cough', confidence: 0.95 }], status: 'AUTO_DROP', confidence_score: 0.95, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
   { id: 'job8', encounter_id: 'e3', suggested_codes: [{ code: 'R50.9', desc: 'Fever, unspecified', confidence: 0.98 }], status: 'AUTO_DROP', confidence_score: 0.98, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+  { id: 'job9', encounter_id: 'e1', suggested_codes: [{code: 'E11.9', desc: 'Type 2 diabetes mellitus without complications', confidence: 0.92}], status: 'AUTO_DROP', confidence_score: 0.92, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+  { id: 'job10', encounter_id: 'e2', suggested_codes: [{code: 'I10', desc: 'Essential hypertension', confidence: 0.99}], status: 'SENT_TO_NPHIES', confidence_score: 0.99, phase: 'AUTONOMOUS', created_at: new Date().toISOString() },
+  { id: 'job11', encounter_id: 'e3', suggested_codes: [{code: 'K37', desc: 'Unspecified appendicitis', confidence: 0.94}], status: 'AUTO_DROP', confidence_score: 0.94, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+  { id: 'job12', encounter_id: 'e4', suggested_codes: [{code: 'S82.90XA', desc: 'Unspecified fracture of lower leg, check laterality', confidence: 0.75}], status: 'NEEDS_REVIEW', confidence_score: 0.75, phase: 'CAC', created_at: new Date().toISOString() },
+  { id: 'job13', encounter_id: 'e5', suggested_codes: [{code: 'E11.9', desc: 'Type 2 diabetes mellitus without complications', confidence: 0.88}, {code: 'I10', desc: 'Essential (primary) hypertension', confidence: 0.91}], status: 'AUTO_DROP', confidence_score: 0.90, phase: 'SEMI_AUTONOMOUS', created_at: new Date().toISOString() },
+  { id: 'job14', encounter_id: 'e1', suggested_codes: [{code: 'J18.9', desc: 'Pneumonia, unspecified organism', confidence: 0.82}], status: 'NEEDS_REVIEW', confidence_score: 0.82, phase: 'CAC', created_at: new Date().toISOString() },
+  { id: 'job15', encounter_id: 'e2', suggested_codes: [{code: 'N39.0', desc: 'Urinary tract infection, site not specified', confidence: 0.84}], status: 'NEEDS_REVIEW', confidence_score: 0.84, phase: 'CAC', created_at: new Date().toISOString() },
 ];
 export const MOCK_NUDGES: Nudge[] = [
     { id: 'n1', encounter_id: 'e1', severity: 'warning', prompt: "Specify the causative organism for 'pneumonia' if known.", status: 'active', created_at: new Date().toISOString() },

@@ -72,34 +72,79 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const page = await CodingJobEntity.list(c.env, cursor, limit);
     return ok(c, page);
   });
-  // POST Ingest Note (mock coding engine)
+  // POST Ingest Note (enhanced mock coding engine)
   app.post('/api/ingest-note', async (c) => {
-    const { clinical_note } = (await c.req.json()) as { clinical_note?: string };
-    if (!isStr(clinical_note)) return bad(c, 'clinical_note is required');
-    const noteLower = clinical_note.toLowerCase();
-    const suggested_codes: SuggestedCode[] = [];
-    if (noteLower.includes('pneumonia')) suggested_codes.push({ code: 'J18.9', desc: 'Pneumonia, unspecified', confidence: 0.85 });
-    if (noteLower.includes('myocardial infarction')) suggested_codes.push({ code: 'I21.9', desc: 'Acute MI, unspecified', confidence: 0.99 });
-    if (noteLower.includes('cough')) suggested_codes.push({ code: 'R05', desc: 'Cough', confidence: 0.95 });
-    const confidence_score = suggested_codes.length > 0 ? suggested_codes.reduce((acc, code) => acc + code.confidence, 0) / suggested_codes.length : 0;
-    let phase: CodingJob['phase'] = 'CAC';
-    let status: CodingJob['status'] = 'NEEDS_REVIEW';
-    if (confidence_score > 0.98) { phase = 'AUTONOMOUS'; status = 'SENT_TO_NPHIES'; } 
-    else if (confidence_score > 0.90) { phase = 'SEMI_AUTONOMOUS'; status = 'AUTO_DROP'; }
-    const encounters = await EncounterEntity.list(c.env, null, 1);
-    const encounter_id = encounters.items.length > 0 ? encounters.items[0].id : 'e_mock';
-    const newJob: CodingJob = {
-      id: crypto.randomUUID(),
-      encounter_id,
-      suggested_codes,
-      status,
-      confidence_score,
-      phase,
-      created_at: new Date().toISOString(),
-    };
-    await CodingJobEntity.create(c.env, newJob);
-    await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingested', object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
-    return ok(c, newJob);
+    const jobId = crypto.randomUUID();
+    try {
+      const body = await c.req.json();
+      const clinical_note: string = body?.clinical_note;
+      const provider_cr: string | undefined = body?.provider_cr;
+      const visit_complexity: string = body?.visit_complexity || 'standard';
+      const realNLP: boolean = body?.realNLP || false;
+      if (!isStr(clinical_note)) {
+        await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingestion_failed', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
+        return bad(c, 'clinical_note is required');
+      }
+      const TERM_MAP = [
+        { synonyms: ['pneumonia', 'pneumonitis', 'سعال شديد'], code: 'J18.9', desc: 'Pneumonia, unspecified organism', confidence: 0.85 },
+        { synonyms: ['myocardial infarction', 'mi', 'heart attack', 'myocardial infarct'], code: 'I21.9', desc: 'Acute MI, unspecified', confidence: 0.99 },
+        { synonyms: ['appendicitis', 'appendix pain', 'appendix inflammation', 'ألم الزائدة'], code: 'K37', desc: 'Unspecified appendicitis', confidence: 0.95 },
+        { synonyms: ['uti', 'urinary tract infection'], code: 'N39.0', desc: 'Urinary tract infection, site not specified', confidence: 0.80 },
+        { synonyms: ['fracture', 'broken bone', 'كسر'], code: 'S82.90XA', desc: 'Unspecified fracture of lower leg, check laterality', confidence: 0.75 },
+        { synonyms: ['diabetes', 'sukari', 'diabetic'], code: 'E11.9', desc: 'Type 2 diabetes mellitus without complications', confidence: 0.92 },
+        { synonyms: ['hypertension', 'high blood pressure', 'ضغط دم مرتفع'], code: 'I10', desc: 'Essential (primary) hypertension', confidence: 0.98 },
+        { synonyms: ['cough'], code: 'R05', desc: 'Cough', confidence: 0.95 },
+      ];
+      let suggested_codes: SuggestedCode[] = [];
+      const seenCodes = new Set<string>();
+      for (const entry of TERM_MAP) {
+        for (const syn of entry.synonyms) {
+          const re = new RegExp(`\\b${syn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          if (re.test(clinical_note)) {
+            if (!seenCodes.has(entry.code)) {
+              // Add random variance for realism
+              const confidenceWithVariance = Math.min(0.99, entry.confidence + (Math.random() * 0.10 - 0.05));
+              suggested_codes.push({ code: entry.code, desc: entry.desc, confidence: parseFloat(confidenceWithVariance.toFixed(2)) });
+              seenCodes.add(entry.code);
+            }
+            break;
+          }
+        }
+      }
+      // Fallback for no matches
+      if (suggested_codes.length === 0) {
+        suggested_codes.push({ code: 'Z00.00', desc: 'General medical examination, unspecified', confidence: 0.50 });
+      }
+      const confidence_score = realNLP ? 0.99 : parseFloat((suggested_codes.reduce((acc, code) => acc + code.confidence, 0) / suggested_codes.length).toFixed(2));
+      let phase: CodingJob['phase'] = 'CAC';
+      let status: CodingJob['status'] = 'NEEDS_REVIEW';
+      if (confidence_score > 0.98 && visit_complexity === 'low-complexity outpatient') {
+        phase = 'AUTONOMOUS';
+        status = 'SENT_TO_NPHIES';
+        await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'claim.submitted_to_nphies', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
+      } else if (confidence_score > 0.90) {
+        phase = 'SEMI_AUTONOMOUS';
+        status = 'AUTO_DROP';
+      }
+      const encounters = await EncounterEntity.list(c.env, null, 1);
+      const encounter_id = encounters.items.length > 0 ? encounters.items[0].id : 'e_mock_fallback';
+      const newJob: CodingJob = {
+        id: jobId,
+        encounter_id,
+        suggested_codes,
+        status,
+        confidence_score,
+        phase,
+        created_at: new Date().toISOString(),
+      };
+      await CodingJobEntity.create(c.env, newJob);
+      await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingested', object_type: 'coding_job', object_id: newJob.id, occurred_at: new Date().toISOString() });
+      return ok(c, newJob);
+    } catch (err: any) {
+      console.error('ingest-note error', err);
+      await AuditLogEntity.create(c.env, { id: crypto.randomUUID(), actor: 'system', action: 'note.ingestion_failed', object_type: 'coding_job', object_id: jobId, occurred_at: new Date().toISOString() });
+      return bad(c, 'failed to ingest note');
+    }
   });
   // GET Nudges
   app.get('/api/nudges', async (c) => {
