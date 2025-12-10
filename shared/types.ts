@@ -19,7 +19,7 @@ export interface ChatMessage {
   text: string;
   ts: number; // epoch millis
 }
-// --- SOLVENTUM DRG SUITE DOMAIN MODELS ---
+// --- BRAINSAIT DRG SUITE DOMAIN MODELS ---
 export interface Patient {
   id: string;
   national_id: string;

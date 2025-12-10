@@ -1,3 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.wrangler/
+
+# Cache files
+.eslintcache
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # Bootstrap marker
 .bootstrap-complete
+
+# Lock files (optional - uncomment if you don't want to track lock files)
+# package-lock.json

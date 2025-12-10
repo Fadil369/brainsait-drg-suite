@@ -1,4 +1,4 @@
--- Solventum DRG Suite: Canonical PostgreSQL Schema
+-- BrainSAIT DRG Suite: Canonical PostgreSQL Schema
 -- This schema defines the core tables for patients, providers, encounters,
 -- claims, and auditing, with specific fields for the Saudi Arabian market (nphies).
 -- Enable UUID generation extension if not already enabled.
