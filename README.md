@@ -23,19 +23,46 @@ BrainSAIT DRG Suite is an enterprise-grade healthcare automation platform tailor
 - **Backend (Core Services)**: Python FastAPI (designed for AWS ECS/EKS), PostgreSQL (AWS RDS), SQLAlchemy.
 - **DevOps & Tools**: Bun, Cloudflare Wrangler, Pytest, Docker, Zod, Pantic.
 ## Deployment
-### Frontend & Edge Backend (Cloudflare)
+
+### Quick Deploy to Cloudflare (Recommended) 🚀
+
+**One-Click Deployment:**
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Fadil369/brainsait-drg-suite)
+
+**OR Automated Script:**
+```bash
+# One command to deploy everything
+./deploy-cf.sh
+```
+
+This script will:
+- ✅ Build the application
+- ✅ Create R2 buckets for document storage
+- ✅ Set up Workers KV for configuration
+- ✅ Initialize D1 SQLite database with schema
+- ✅ Deploy to Cloudflare Workers with Durable Objects
+
+**Manual Deployment:**
 1.  **Prerequisites**: A Cloudflare account and Wrangler CLI installed (`npm install -g wrangler`).
 2.  **Login**: Authenticate with your Cloudflare account: `wrangler login`.
 3.  **Build**: Build the project assets and worker script:
     ```bash
-    bun install
-    bun build
+    npm install
+    npm run build
     ```
 4.  **Deploy**: Publish the application to your Cloudflare account:
     ```bash
-    wrangler deploy
+    npm run deploy
     ```
     Wrangler will output the URL of your deployed application.
+
+**📚 Complete Deployment Guide**: See [`CLOUDFLARE_DEPLOYMENT_GUIDE.md`](./CLOUDFLARE_DEPLOYMENT_GUIDE.md) for:
+- R2 object storage configuration
+- Workers KV setup for caching
+- D1 database initialization
+- Secrets management for nphies credentials
+- GitHub Actions CI/CD pipeline
+- Production best practices
 ### Core Backend (AWS with Docker)
 The Python services (`cdi_api.py`, `coding_engine.py`, `nphies_connector.py`) are designed to run on AWS. A `docker-compose.yml` would be used for a complete local setup.
 1.  **Prerequisites**: Docker, AWS CLI.
