@@ -1,0 +1,323 @@
+# BrainSAIT DRG Suite - Dependabot Configuration
+# Enhanced dependency management for healthcare compliance and security
+
+version: 2
+
+# CRITICAL:  HIPAA & NPHIES compliant security updates
+# All dependencies are monitored for CVEs with immediate alerting
+
+updates:
+  # ============================================================
+  # FRONTEND - Next.js / React / TypeScript (88.1%)
+  # ============================================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule: 
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit:  10
+    reviewers: 
+      - "Fadil369"
+    assignees:
+      - "Fadil369"
+    labels: 
+      - "dependencies"
+      - "frontend"
+      - "security"
+      - "healthcare-compliance"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    
+    # HEALTHCARE CRITICAL:  Security-first updates
+    allow:
+      - dependency-type: "all"
+    
+    # Group updates for better review efficiency
+    groups:
+      # Production dependencies - HIPAA critical
+      react-core: 
+        patterns:
+          - "react"
+          - "react-dom"
+          - "next"
+        update-types: 
+          - "minor"
+          - "patch"
+      
+      # UI/Design system
+      ui-components:
+        patterns:
+          - "@paper-design/*"
+          - "framer-motion"
+          - "tailwindcss"
+          - "@radix-ui/*"
+          - "styled-components"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Healthcare/FHIR libraries - CRITICAL
+      healthcare-libs:
+        patterns:
+          - "@types/fhir"
+          - "fhir*"
+          - "@ahryman40k/ts-fhir-types"
+        update-types:
+          - "patch"
+      
+      # Internationalization - Arabic support
+      i18n-libs:
+        patterns:
+          - "react-i18next"
+          - "i18next"
+          - "date-fns"
+          - "date-fns-tz"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # TypeScript ecosystem
+      typescript-ecosystem:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "ts-node"
+          - "tsx"
+        update-types: 
+          - "patch"
+      
+      # Development tools
+      dev-tools:
+        patterns:
+          - "eslint"
+          - "prettier"
+          - "@typescript-eslint/*"
+          - "vitest"
+          - "jest"
+        update-types:
+          - "minor"
+          - "patch"
+    
+    # Ignore specific updates that may break compatibility
+    ignore:
+      # Pin major versions for stability in healthcare environment
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    
+    versioning-strategy: "increase"
+
+  # ============================================================
+  # BACKEND - Python / FastAPI (7.1%)
+  # ============================================================
+  - package-ecosystem: "pip"
+    directory: "/src/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time:  "04:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 8
+    reviewers:
+      - "Fadil369"
+    assignees:
+      - "Fadil369"
+    labels: 
+      - "dependencies"
+      - "backend"
+      - "python"
+      - "security"
+      - "healthcare-compliance"
+    commit-message: 
+      prefix: "chore(deps)"
+      prefix-development:  "chore(deps-dev)"
+      include: "scope"
+    
+    groups:
+      # FastAPI & core web framework
+      fastapi-core:
+        patterns:
+          - "fastapi"
+          - "pydantic"
+          - "uvicorn"
+          - "starlette"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # FHIR & Healthcare - CRITICAL for NPHIES
+      healthcare-libs:
+        patterns:
+          - "fhir. resources"
+          - "hl7*"
+          - "pydicom"
+        update-types:
+          - "patch"
+      
+      # Security & Cryptography - HIPAA CRITICAL
+      security-libs: 
+        patterns:
+          - "cryptography"
+          - "pyjwt"
+          - "python-jose"
+          - "passlib"
+          - "bcrypt"
+        update-types:
+          - "patch"
+      
+      # HTTP & API clients - NPHIES integration
+      http-clients:
+        patterns:
+          - "requests"
+          - "httpx"
+          - "urllib3"
+          - "aiohttp"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Database & ORM
+      database-libs:
+        patterns:
+          - "sqlalchemy"
+          - "psycopg2*"
+          - "alembic"
+          - "redis"
+        update-types: 
+          - "minor"
+          - "patch"
+      
+      # AI/ML libraries for coding engine
+      ai-libs:
+        patterns:
+          - "openai"
+          - "anthropic"
+          - "langchain*"
+          - "transformers"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Testing & Development
+      dev-libs:
+        patterns:
+          - "pytest"
+          - "pytest-*"
+          - "black"
+          - "ruff"
+          - "mypy"
+        update-types:
+          - "minor"
+          - "patch"
+    
+    ignore:
+      # Pin major versions for production stability
+      - dependency-name:  "fastapi"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "sqlalchemy"
+        update-types:  ["version-update:semver-major"]
+    
+    versioning-strategy: "increase"
+
+  # ============================================================
+  # DOCKER - Container dependencies
+  # ============================================================
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day:  "tuesday"
+      time: "02:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Fadil369"
+    assignees:
+      - "Fadil369"
+    labels: 
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+      - "security"
+    commit-message:
+      prefix:  "chore(docker)"
+      include: "scope"
+    
+    # Security-first for base images
+    allow:
+      - dependency-type:  "all"
+
+  # ============================================================
+  # GITHUB ACTIONS - CI/CD pipeline security
+  # ============================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval:  "weekly"
+      day: "tuesday"
+      time: "03:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Fadil369"
+    assignees:
+      - "Fadil369"
+    labels: 
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+      - "security"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    
+    groups:
+      actions-core:
+        patterns:
+          - "actions/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ============================================================
+  # ALTERNATE:  If you have a separate package. json in apps/
+  # ============================================================
+  # Uncomment if you have monorepo structure
+  # - package-ecosystem: "npm"
+  #   directory: "/apps/web"
+  #   schedule: 
+  #     interval: "weekly"
+  #     day: "monday"
+  #     time: "03:30"
+  #     timezone: "Asia/Riyadh"
+  #   # ...  (same configuration as main npm)
+
+# NOTES FOR BRAINSAIT HEALTHCARE COMPLIANCE:
+# ==========================================
+# 1. All security patches are applied weekly (Monday/Tuesday)
+# 2. Updates scheduled during low-traffic hours (Saudi timezone)
+# 3. Healthcare-critical libraries (FHIR, crypto) monitored separately
+# 4. Major version updates ignored for stability (manual review required)
+# 5. Grouped updates reduce PR noise and improve review efficiency
+# 6. All PRs labeled for HIPAA/NPHIES compliance tracking
+#
+# SECURITY PRIORITIES:
+# - cryptography, pyjwt, passlib (HIPAA encryption)
+# - fhir.resources, @types/fhir (NPHIES compliance)
+# - requests, httpx (secure API communication)
+# - next, react (secure UI framework)
+#
+# MANUAL REVIEW REQUIRED FOR:
+# - Major version updates (breaking changes)
+# - FHIR specification changes (NPHIES compatibility)
+# - Database schema migrations (SQLAlchemy major updates)
+# - Authentication library changes (OAuth/JWT)
