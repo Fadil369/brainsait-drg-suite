@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port ${PORT:-3000}",
     "build": "vite build",
+    "build:cf": "bash scripts/cloudflare-build.sh",
     "lint": "eslint --cache -f json --quiet .",
     "preview": "bun run build && vite preview --host 0.0.0.0 --port ${PORT:-4173}",
     "deploy": "bun run build && wrangler deploy",
+    "deploy:preview": "bun run build && wrangler pages deploy dist --project-name=brainsait-drg-suite",
+    "deploy:production": "bun run build && wrangler pages deploy dist --project-name=brainsait-drg-suite --branch=main",
+    "cf:logs": "wrangler pages deployment tail",
     "cf-typegen": "wrangler types",
     "prepare": "bun .bootstrap.js || true"
   },
