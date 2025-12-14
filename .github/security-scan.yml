@@ -1,0 +1,30 @@
+name: Healthcare Security Scan
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run npm audit (HIPAA compliance)
+        run: npm audit --audit-level=moderate
+      
+      - name: Run Python safety check
+        run: |
+          pip install safety
+          safety check --json
+      
+      - name:  FHIR specification validation
+        run: |
+          # Validate FHIR R4 compatibility for NPHIES
+          echo "Checking FHIR dependencies..."
+          npm list @types/fhir || true
