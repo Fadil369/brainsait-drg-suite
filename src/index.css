@@ -162,7 +162,7 @@
     }
   }
   .floating-card {
-    @apply shadow-lg hover:shadow-2xl hover:-translate-y-2 active:scale-98 transition-all duration-300 ease-out;
+    @apply shadow-lg hover:shadow-2xl hover:-translate-y-2 active:scale-95 transition-all duration-300 ease-out;
   }
   .gradient-overlay {
     @apply absolute inset-0 bg-gradient-primary/20 -z-10 rounded-xl;
