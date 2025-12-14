@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 const getStatusVariant = (status: Claim['status']) => {
   switch (status) {
     case 'FC_3': return 'default';
@@ -38,9 +39,7 @@ export function ClaimsManager() {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 300);
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [searchTerm]);
   if (error) toast.error('Failed to load claims data.');
   const filteredClaims = useMemo(() => {
@@ -77,7 +76,7 @@ export function ClaimsManager() {
                 <CardTitle className="text-2xl font-display">Claims Manager</CardTitle>
                 <CardDescription>Search, filter, and manage all claims.</CardDescription>
               </div>
-              <Button onClick={handleExport} variant="outline" disabled={isExporting}>
+              <Button onClick={handleExport} variant="outline" disabled={isExporting} className={cn("min-h-[44px]", isExporting && "shimmer-bg")}>
                 {isExporting ? <RotateCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 {isExporting ? 'Exporting...' : 'Export JSON'}
               </Button>
@@ -87,7 +86,7 @@ export function ClaimsManager() {
                 placeholder="Filter by Claim #"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:max-w-sm"
+                className="w-full sm:max-w-sm focus:ring-2 focus:ring-blue-500 shadow-glow"
               />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]">
@@ -105,7 +104,7 @@ export function ClaimsManager() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border overflow-x-auto scroll-snap-type-x mandatory snap-mandatory">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -120,11 +119,11 @@ export function ClaimsManager() {
                   {isLoading ? (
                     Array.from({ length: 10 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32 shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-24 shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20 shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-28 shimmer-bg" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto shimmer-bg" /></TableCell>
                       </TableRow>
                     ))
                   ) : filteredClaims.length > 0 ? (
@@ -134,15 +133,15 @@ export function ClaimsManager() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
-                        className="hover:shadow-md transform hover:-translate-y-px transition-all duration-200"
+                        className="hover:shadow-lg transform hover:-translate-y-px transition-all duration-200 even:bg-muted/30"
                       >
-                        <TableCell className="font-medium">{claim.claim_number}</TableCell>
-                        <TableCell><Badge variant={getStatusVariant(claim.status)}>{claim.status}</Badge></TableCell>
+                        <TableCell className="font-medium text-sm sm:text-base">{claim.claim_number}</TableCell>
+                        <TableCell><Badge variant={getStatusVariant(claim.status)} className="bg-gradient-primary/20 text-primary">{claim.status}</Badge></TableCell>
                         <TableCell>SAR {claim.amount.toLocaleString()}</TableCell>
                         <TableCell>{claim.submitted_at ? format(new Date(claim.submitted_at), 'PPp') : 'N/A'}</TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon"><RotateCw className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-[44px] w-[44px]"><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-[44px] w-[44px]"><RotateCw className="h-4 w-4" /></Button>
                         </TableCell>
                       </motion.tr>
                     ))

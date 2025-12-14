@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,30 +71,31 @@ export function CodingWorkspace() {
                     size="sm"
                     onClick={() => acceptCodesMutation.mutate(codingJob.id)}
                     disabled={acceptCodesMutation.isPending || codingJob.status !== 'NEEDS_REVIEW'}
+                    className="min-h-[44px]"
                     >
                     <ThumbsUp className="mr-2 h-4 w-4" />
                     {codingJob.status === 'AUTO_DROP' ? 'Codes Accepted' : 'Accept All'}
                     </Button>
                 )}
-                <Button size="sm" className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white shadow-md">
+                <Button size="sm" className="bg-[#0E5FFF] hover:bg-[#0E5FFF]/90 text-white shadow-md min-h-[44px]">
                     <Send className="mr-2 h-4 w-4" />
                     Submit Claim
                 </Button>
             </div>
         </div>
-        <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="flex-1 w-full rounded-lg border bg-background">
-          <ResizablePanel defaultSize={50}>
+        <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="flex-1 w-full rounded-lg border bg-background h-full scroll-snap-type-y mandatory">
+          <ResizablePanel defaultSize={50} minSize={30}>
             <Card className="h-full flex flex-col border-0 rounded-none">
               <CardHeader className="py-4">
                 <CardTitle>Clinical Note</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden p-4">
-                <ScrollArea className="h-full pr-4">
+                <ScrollArea className="h-full pr-4 scroll-snap-type-y snap-mandatory">
                   {isLoading ? (
                     <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-full shimmer-bg" />
+                      <Skeleton className="h-4 w-full shimmer-bg" />
+                      <Skeleton className="h-4 w-3/4 shimmer-bg" />
                     </div>
                   ) : (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -106,7 +107,7 @@ export function CodingWorkspace() {
             </Card>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50}>
+          <ResizablePanel defaultSize={50} minSize={30}>
             <Card className="h-full flex flex-col border-0 rounded-none">
               <CardHeader className="py-4">
                 <CardTitle>AI-Suggested Codes</CardTitle>
@@ -127,10 +128,10 @@ export function CodingWorkspace() {
                         {isLoading ? (
                           Array.from({ length: 4 }).map((_, i) => (
                             <TableRow key={i}>
-                              <TableCell className="px-4"><Skeleton className="h-5 w-24" /></TableCell>
-                              <TableCell className="px-4"><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="text-center px-4"><Skeleton className="h-6 w-16 mx-auto" /></TableCell>
-                              <TableCell className="text-right px-4"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                              <TableCell className="px-4"><Skeleton className="h-5 w-24 shimmer-bg" /></TableCell>
+                              <TableCell className="px-4"><Skeleton className="h-5 w-full shimmer-bg" /></TableCell>
+                              <TableCell className="text-center px-4"><Skeleton className="h-6 w-16 mx-auto shimmer-bg" /></TableCell>
+                              <TableCell className="text-right px-4"><Skeleton className="h-8 w-20 ml-auto shimmer-bg" /></TableCell>
                             </TableRow>
                           ))
                         ) : codingJob?.suggested_codes?.length ? (
@@ -141,22 +142,22 @@ export function CodingWorkspace() {
                               initial="hidden"
                               animate="visible"
                               transition={{ duration: 0.3, delay: index * 0.05 }}
-                              className="hover:bg-muted/50"
+                              className="hover:bg-muted/50 hover:shadow-md hover:-translate-y-0.5 duration-200"
                             >
-                              <TableCell className="font-medium px-4">
+                              <TableCell className="font-medium px-4 min-h-[44px]">
                                 {item.code}
                               </TableCell>
                               <TableCell className="px-4">{item.desc}</TableCell>
                               <TableCell className="text-center px-4">
-                                <Badge variant={item.confidence > 0.9 ? 'default' : 'secondary'}>
+                                <Badge className="bg-gradient-primary/20 text-gradient font-semibold" variant={item.confidence > 0.9 ? 'default' : 'secondary'}>
                                   {(item.confidence * 100).toFixed(0)}%
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right space-x-2 px-4">
-                                <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700 h-8 w-8">
+                                <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700 h-11 w-11">
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 h-8 w-8">
+                                <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 h-11 w-11">
                                   <XCircle className="h-4 w-4" />
                                 </Button>
                               </TableCell>
@@ -166,8 +167,9 @@ export function CodingWorkspace() {
                           <TableRow>
                             <TableCell colSpan={4} className="h-24 text-center">
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
+                                    <FilePlus2 className="h-12 w-12 text-muted-foreground/50" />
                                     <p>No codes suggested for this note.</p>
-                                    <Button asChild variant="outline">
+                                    <Button asChild variant="outline" className="min-h-[44px]">
                                         <Link to="/"><FilePlus2 className="mr-2 h-4 w-4" /> Ingest a New Note</Link>
                                     </Button>
                                 </div>

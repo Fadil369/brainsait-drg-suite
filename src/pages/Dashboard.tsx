@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { Clock, FileText, Lightbulb, Scale, Settings, Percent } from 'lucide-react';
+import { Clock, FileText, Lightbulb, Percent } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Claim, CodingJob, Nudge } from '@shared/types';
@@ -32,14 +32,14 @@ const itemVariants = {
 };
 const StatCard = ({ title, value, icon, isLoading, linkTo, children }: { title: string; value: string | number; icon: React.ReactNode; isLoading?: boolean; linkTo?: string; children?: React.ReactNode }) => {
   const cardContent = (
-    <Card className="hover:shadow-xl transition-shadow duration-300">
+    <Card className="shadow-lg hover:shadow-xl hover:-translate-y-1.5 active:scale-98 duration-300 rounded-xl transition-all">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {icon}
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-8 w-1/2 animate-pulse" />
+          <Skeleton className="h-8 w-1/2 shimmer-bg" />
         ) : (
           <div className="text-2xl font-bold">{value}</div>
         )}
@@ -89,7 +89,7 @@ export function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Breadcrumbs />
         <motion.div
-          className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -118,7 +118,7 @@ export function Dashboard() {
               <CardDescription>A view of the latest claims processed by the system.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto rounded-lg border">
+              <div className="overflow-x-auto rounded-lg border scroll-snap-type-x mandatory snap-mandatory">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -131,9 +131,9 @@ export function Dashboard() {
                     {isLoadingClaims ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-20 animate-pulse" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16 animate-pulse" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-20 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16 shimmer-bg" /></TableCell>
                         </TableRow>
                       ))
                     ) : claimsData?.items && claimsData.items.length > 0 ? (
@@ -159,13 +159,13 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               {isLoadingAnalytics ? (
-                <div className="flex justify-center items-center h-[200px]">
-                  <Skeleton className="h-48 w-48 rounded-full animate-pulse" />
+                <div className="flex justify-center items-center h-[200px] sm:h-[250px] md:h-[300px]">
+                  <Skeleton className="h-48 w-48 rounded-full shimmer-bg" />
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
-                    <Pie data={claimStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    <Pie data={claimStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
                       {claimStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}

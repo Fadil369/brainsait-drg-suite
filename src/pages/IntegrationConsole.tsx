@@ -38,49 +38,51 @@ export function IntegrationConsole() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Breadcrumbs />
         <div className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-display">nphies Integration Console</CardTitle>
-              <CardDescription>Manage and monitor the connection to the nphies platform.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 p-4 sm:p-6">
-              <div className="flex items-center space-x-2">
-                <Switch id="sandbox-mode" defaultChecked />
-                <Label htmlFor="sandbox-mode">Sandbox Mode</Label>
-                <Badge variant="default">Enabled</Badge>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client-id">OAuth Client ID</Label>
-                <div className="flex items-center gap-2">
-                  <Input id="client-id" value="**********" readOnly />
-                  <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_id_12345')}><Copy className="h-4 w-4" /></Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:shadow-xl hover:-translate-y-1 duration-300 transition-all lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-2xl font-display">nphies Integration</CardTitle>
+                <CardDescription>Manage nphies connection.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Switch id="sandbox-mode" defaultChecked />
+                  <Label htmlFor="sandbox-mode">Sandbox Mode</Label>
+                  <Badge variant="default">Enabled</Badge>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client-secret">OAuth Client Secret</Label>
-                <div className="flex items-center gap-2">
-                  <Input id="client-secret" type="password" value="********************" readOnly />
-                  <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_secret_67890')}><Copy className="h-4 w-4" /></Button>
+                <div className="space-y-2">
+                  <Label htmlFor="client-id">OAuth Client ID</Label>
+                  <div className="flex items-center gap-2">
+                    <Input id="client-id" value="**********" readOnly className="focus:ring-2 ring-blue-500 shadow-glow" />
+                    <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_id_12345')}><Copy className="h-4 w-4" /></Button>
+                  </div>
                 </div>
-              </div>
-              <Button variant="outline" className="active:scale-95 transition-transform">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh Token
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Endpoint Health Check</CardTitle>
-              <CardDescription>Run live tests against the nphies sandbox endpoints.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              <Button onClick={() => handleTestEndpoint('Claims')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Claims</Button>
-              <Button onClick={() => handleTestEndpoint('Pre-Auth')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Pre-Auth</Button>
-              <Button onClick={() => handleTestEndpoint('Status Check')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Status Check</Button>
-              <Button onClick={() => handleTestEndpoint('Payments')} className="active:scale-95 transition-transform"><PlayCircle className="mr-2 h-4 w-4" /> Test Payments</Button>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="client-secret">OAuth Client Secret</Label>
+                  <div className="flex items-center gap-2">
+                    <Input id="client-secret" type="password" value="********************" readOnly className="focus:ring-2 ring-blue-500 shadow-glow" />
+                    <Button variant="outline" size="icon" onClick={() => handleCopy('mock_client_secret_67890')}><Copy className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="active:scale-95 transition-transform min-h-[44px]">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh Token
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-xl hover:-translate-y-1 duration-300 transition-all lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Endpoint Health Check</CardTitle>
+                <CardDescription>Run live tests against sandbox endpoints.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                <Button onClick={() => handleTestEndpoint('Claims')} className="active:scale-95 transition-transform h-[44px]"><PlayCircle className="mr-2 h-4 w-4" /> Test Claims</Button>
+                <Button onClick={() => handleTestEndpoint('Pre-Auth')} className="active:scale-95 transition-transform h-[44px]"><PlayCircle className="mr-2 h-4 w-4" /> Test Pre-Auth</Button>
+                <Button onClick={() => handleTestEndpoint('Status Check')} className="active:scale-95 transition-transform h-[44px]"><PlayCircle className="mr-2 h-4 w-4" /> Test Status Check</Button>
+                <Button onClick={() => handleTestEndpoint('Payments')} className="active:scale-95 transition-transform h-[44px]"><PlayCircle className="mr-2 h-4 w-4" /> Test Payments</Button>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Recent Integration Logs</CardTitle>
@@ -100,9 +102,9 @@ export function IntegrationConsole() {
                     {isLoading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-48 shimmer-bg" /></TableCell>
                         </TableRow>
                       ))
                     ) : data?.items.length ? (

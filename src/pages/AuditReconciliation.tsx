@@ -75,7 +75,7 @@ export function AuditReconciliation() {
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Breadcrumbs />
-        <div className="grid gap-4 sm:gap-8 lg:grid-cols-2">
+        <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -84,7 +84,7 @@ export function AuditReconciliation() {
                   <CardDescription>Match incoming payments to claims.</CardDescription>
                 </div>
                 <motion.div whileTap={{ scale: 0.95 }}>
-                  <Button onClick={handleBatchReconcile} disabled={isReconciling}>
+                  <Button onClick={handleBatchReconcile} disabled={isReconciling} className="min-h-[44px] active:scale-95">
                     <Bot className="mr-2 h-4 w-4" />
                     {isReconciling ? 'Reconciling...' : 'Run Batch'}
                   </Button>
@@ -97,7 +97,7 @@ export function AuditReconciliation() {
               )}
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-md border scroll-snap-type-x mandatory snap-mandatory">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -115,10 +115,10 @@ export function AuditReconciliation() {
                     {isLoadingPayments ? (
                       Array.from({ length: 4 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32 shimmer-bg" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-24 shimmer-bg" /></TableCell>
                         </TableRow>
                       ))
                     ) : sortedPayments.map(p => (
@@ -147,7 +147,7 @@ export function AuditReconciliation() {
             <CardContent>
               <div className="space-y-4 overflow-x-auto">
                 {isLoadingAudits ? (
-                  Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
+                  Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full shimmer-bg" />)
                 ) : auditData?.items.map(log => (
                   <div key={log.id} className="flex items-center">
                     <FileArchive className="h-5 w-5 text-muted-foreground" />

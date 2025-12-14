@@ -66,7 +66,7 @@ export function CDINudgesConsole() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border overflow-x-auto scroll-snap-type-x mandatory snap-mandatory">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -81,11 +81,11 @@ export function CDINudgesConsole() {
                   {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-6 w-20 animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-full animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16 animate-pulse" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto animate-pulse" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-full shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16 shimmer-bg" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24 shimmer-bg" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto shimmer-bg" /></TableCell>
                       </TableRow>
                     ))
                   ) : filteredNudges.length > 0 ? (
@@ -93,17 +93,17 @@ export function CDINudgesConsole() {
                       <TableRow key={nudge.id} className="hover:bg-muted/50">
                         <TableCell>
                           <motion.div whileHover={{ scale: 1.05 }}>
-                            <Badge variant={getSeverityVariant(nudge.severity)}>{nudge.severity}</Badge>
+                            <Badge variant={getSeverityVariant(nudge.severity)} className="bg-gradient-primary/20 text-gradient font-semibold">{nudge.severity}</Badge>
                           </motion.div>
                         </TableCell>
-                        <TableCell className="font-medium max-w-[200px] sm:max-w-xs md:max-w-md truncate">{nudge.prompt}</TableCell>
+                        <TableCell className="font-medium max-w-xs sm:max-w-md truncate text-sm sm:text-base">{nudge.prompt}</TableCell>
                         <TableCell className="text-muted-foreground">{nudge.encounter_id}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDistanceToNow(new Date(nudge.created_at), { addSuffix: true })}</TableCell>
                         <TableCell className="text-right space-x-1">
-                          <Button variant="ghost" size="sm" className="h-11 w-11" title="Apply Suggestion" onClick={() => applyNudgeMutation.mutate(nudge.id)} disabled={nudge.status !== 'active'}>
+                          <Button variant="ghost" size="icon" className="h-11 w-11 min-h-[44px]" title="Apply Suggestion" onClick={() => applyNudgeMutation.mutate(nudge.id)} disabled={nudge.status !== 'active'}>
                             <Check className="h-4 w-4 text-green-600" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-11 w-11" title="Dismiss Nudge" disabled={nudge.status !== 'active'}>
+                          <Button variant="ghost" size="icon" className="h-11 w-11 min-h-[44px]" title="Dismiss Nudge" disabled={nudge.status !== 'active'}>
                             <X className="h-4 w-4 text-red-600" />
                           </Button>
                         </TableCell>
