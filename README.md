@@ -1,5 +1,5 @@
 # BrainSAIT DRG Suite �� Saudi DRG Automation
-[![[cloudflarebutton]]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})
+[![[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Fadil369/brainsait-drg-suite)]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})
 BrainSAIT DRG Suite is an enterprise-grade healthcare automation platform tailored for the Saudi Arabian market. It ingests unstructured clinical notes, leverages AI-driven logic to assign ICD-10 and DRG codes (APR-DRGs for inpatient and EAPGs for outpatient), and automates claims submission to the national nphies platform. Built with SOC 2+ compliance in mind, the system supports configurable workflows across three automation phases: Computer-Assisted Coding (CAC), Semi-Autonomous, and Autonomous. The architecture separates a secure Python FastAPI backend (hosted on AWS) from a visually stunning React frontend deployed at the edge via Cloudflare Workers for global performance and intuitive user experience.
 ## Key Features
 - **Clinical Note Ingestion & AI Coding**: Process unstructured text to generate ICD/DRG code suggestions with confidence scores and phase-based automation (CAC → Semi-Autonomous → Autonomous).
@@ -87,5 +87,5 @@ The frontend interacts with a mock API backend running on Cloudflare Workers. Ke
 - `POST /api/ingest-note`: Submits a clinical note for analysis.
 - `GET /api/analytics`: Fetches aggregated dashboard metrics.
 - `GET /api/audit-logs`: Fetches system audit logs (admin only).
-[![[cloudflarebutton]]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})
+[![[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Fadil369/brainsait-drg-suite)]](https://deploy.workers.cloudflare.com/?url=${repositoryUrl})
 **Project Status: 100% Complete - Fully Shippable.**
