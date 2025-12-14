@@ -1,0 +1,19 @@
+{
+  "production_branch": "main",
+  "build": {
+    "command": "bun install && bun run build",
+    "destination_dir": "dist",
+    "root_dir": "/",
+    "environment_variables": {
+      "NODE_VERSION": "22",
+      "BUN_VERSION": "1.2.15",
+      "VITE_LOGGER_TYPE": "json"
+    }
+  },
+  "preview": {
+    "environment_variables": {
+      "NODE_VERSION": "22",
+      "BUN_VERSION": "1.2.15"
+    }
+  }
+}
