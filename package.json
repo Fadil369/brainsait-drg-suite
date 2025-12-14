@@ -13,7 +13,8 @@
     "deploy:preview": "bun run build && wrangler pages deploy dist --project-name=brainsait-drg-suite",
     "deploy:production": "bun run build && wrangler pages deploy dist --project-name=brainsait-drg-suite --branch=main",
     "cf:logs": "wrangler pages deployment tail",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "prepare": "bun .bootstrap.js || true"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
