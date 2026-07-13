@@ -45,24 +45,67 @@ export interface Claim {
 export interface SuggestedCode {
   code: string;
   desc: string;
+  desc_ar?: string;
+  term_en?: string;
+  term_ar?: string;
+  matched_text?: string;
   confidence: number;
+  is_principal?: boolean;
+  soi_weight?: number; // contribution to Severity of Illness (0-3)
+  rom_weight?: number; // contribution to Risk of Mortality (0-3)
+}
+export interface SuggestedProcedure {
+  code: string;
+  desc: string;
+  desc_ar?: string;
+  matched_text?: string;
+}
+// --- BRAINSAIT APR-DRG GROUPER RESULT ---
+// A deterministic, explainable implementation of the APR-DRG methodology:
+// assigns a base DRG family from the principal diagnosis, then derives
+// Severity of Illness (SOI) and Risk of Mortality (ROM) subclasses (1-4)
+// from the weighted contribution of secondary diagnoses. When a matching
+// OR procedure is detected, the encounter is upgraded from the Medical to
+// the Surgical partition, as in real APR-DRG methodology.
+export interface DrgResult {
+  code: string; // e.g. "194"
+  title_en: string;
+  title_ar: string;
+  soi: 1 | 2 | 3 | 4; // Severity of Illness
+  rom: 1 | 2 | 3 | 4; // Risk of Mortality
+  relative_weight: number; // drives Case Mix Index (CMI)
+  subclass: string; // e.g. "194-M-2" (DRG-Partition-SOI)
+  methodology: 'BrainSAIT-APR-DRG' | 'BrainSAIT-EAPG';
+  partition: 'Medical' | 'Surgical';
+  procedure?: { code: string; desc_en: string; desc_ar: string };
+  /** Bilingual, human-readable trace of every factor that produced this result. */
+  explanation: { en: string[]; ar: string[] };
 }
 export interface CodingJob {
   id: string;
   encounter_id: string;
   suggested_codes: SuggestedCode[];
+  suggested_procedures?: SuggestedProcedure[];
   status: 'NEEDS_REVIEW' | 'AUTO_DROP' | 'SENT_TO_NPHIES' | 'REJECTED';
   confidence_score: number;
   phase: 'CAC' | 'SEMI_AUTONOMOUS' | 'AUTONOMOUS';
   created_at: string; // ISO string
   source_text?: string;
+  principal_code?: string;
+  secondary_codes?: string[];
+  drg?: DrgResult;
+  detected_language?: 'en' | 'ar' | 'mixed';
 }
 export interface Nudge {
     id: string;
     encounter_id: string;
     severity: 'info' | 'warning' | 'critical';
     prompt: string;
+    prompt_ar?: string;
     suggested_text?: string;
+    suggested_text_ar?: string;
+    soi_impact?: string; // e.g. "Closing this gap may raise SOI from 2 to 3"
+    soi_impact_ar?: string;
     status: 'active' | 'resolved' | 'dismissed';
     created_at: string; // ISO string
 }
@@ -88,5 +131,9 @@ export interface Analytics {
     accuracy: number;
     phase: 'CAC' | 'SEMI_AUTONOMOUS' | 'AUTONOMOUS';
     phase_dist?: Record<string, number>;
+    relative_weight?: number; // contributes to Case Mix Index
+    soi?: number;
+    rom?: number;
     created_at: string; // ISO string
 }
+export type Language = 'en' | 'ar';
