@@ -3,18 +3,27 @@ Tests for the bilingual (AR/EN code-switching) coding engine, the
 APR-DRG grouper, and the bilingual CDI nudge rules.
 """
 import pytest
+from pydantic import ValidationError
 
 from src.backend.coding_engine import (
     CodingEngine,
     classify_automation_phase,
     contains_any,
     detect_language,
+    elect_principal,
     match_clinical_text,
     match_procedures,
     run_coding_engine,
 )
-from src.backend.drg_grouper import DRG_FAMILY_TABLE, compute_case_mix_index, group_encounter
-from src.backend.cdi_api import get_cdi_nudges
+from src.backend.drg_grouper import (
+    DEPARTMENTS,
+    DRG_FAMILY_TABLE,
+    compute_case_mix_index,
+    compute_department_distribution,
+    group_encounter,
+    round_half_up_2dp,
+)
+from src.backend.cdi_api import AnalyzeRequest, get_cdi_nudges
 from src.backend.bilingual_lexicon import BILINGUAL_LEXICON
 from src.backend.procedure_lexicon import PROCEDURE_LEXICON
 
@@ -69,6 +78,21 @@ def test_negation_excludes_match_arabic():
     assert "R50.9" not in codes
 
 
+def test_negation_excludes_match_cross_language_arabic_negator_english_term():
+    # Arabic negation phrase immediately preceding an English diagnosis term:
+    # negation/uncertainty detection must not be gated to the matched
+    # synonym's own language, or code-switched negation is silently missed.
+    matches = match_clinical_text("لا يوجد pneumonia on this patient's chest x-ray.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "J18.9" not in codes
+
+
+def test_negation_excludes_match_cross_language_english_negator_arabic_term():
+    matches = match_clinical_text("Chart reviewed, no التهاب رئوي seen on imaging.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "J18.9" not in codes
+
+
 def test_uncertainty_lowers_confidence():
     matches = match_clinical_text("Suspected pneumonia, awaiting culture.")
     match = next(m for m in matches if m["entry"]["code"] == "J18.9")
@@ -76,11 +100,73 @@ def test_uncertainty_lowers_confidence():
     assert match["confidence"] < match["entry"]["base_confidence"]
 
 
+# --- Post-position negation/uncertainty (verdict stated AFTER the term) ---
+def test_post_position_negation_ruled_out_directly_after_term():
+    matches = match_clinical_text("Chest pain, myocardial infarction ruled out.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "I21.9" not in codes
+    assert "R07.9" in codes  # the unrelated earlier clause's diagnosis must survive
+
+
+def test_post_position_negation_ruled_out_with_intervening_words():
+    matches = match_clinical_text("Patient presents with chest pain. MI was ruled out after serial troponins.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "I21.9" not in codes
+    assert "R07.9" in codes
+
+
+def test_post_position_negation_excluded():
+    matches = match_clinical_text("Sepsis was excluded after workup; patient has simple UTI.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "A41.9" not in codes
+    assert "N39.0" in codes
+
+
+def test_post_position_negation_does_not_cross_unrelated_clause():
+    # "no further detail documented" is a documentation-completeness remark
+    # about pneumonia, not a negation of it — the comma-shorthand verdict
+    # check must not treat every clause-initial "no" as a verdict.
+    matches = match_clinical_text("Patient has pneumonia, no further detail documented.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "J18.9" in codes
+
+
+def test_post_position_uncertainty_comma_shorthand():
+    # "<term>, rule out" is common ED/radiology shorthand and must still
+    # mark the diagnosis uncertain, not drop it or treat it as negated.
+    matches = match_clinical_text("Consider MI, rule out.")
+    match = next(m for m in matches if m["entry"]["code"] == "I21.9")
+    assert match["uncertain"] is True
+
+
+def test_negated_procedure_post_position():
+    procs = match_procedures("Appendectomy was not performed; managed conservatively.")
+    codes = {p["entry"]["code"] for p in procs}
+    assert "PR-APPY" not in codes
+
+
 def test_specific_fracture_supersedes_generic():
     matches = match_clinical_text("Left leg fracture after fall, left tibia fracture confirmed on x-ray.")
     codes = {m["entry"]["code"] for m in matches}
     assert "S82.202A" in codes
     assert "S82.90XA" not in codes  # superseded by the more specific code
+
+
+# --- Contradiction verification: a note can't logically have both the
+# generic/uncomplicated variant of a condition AND its more specific
+# complicated variant, or two mutually exclusive delivery outcomes.
+def test_diabetic_ketoacidosis_supersedes_uncomplicated_diabetes():
+    matches = match_clinical_text("Patient with known diabetes presents with DKA, diabetic ketoacidosis confirmed.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "E11.10" in codes
+    assert "E11.9" not in codes  # "without complications" contradicts the DKA finding
+
+
+def test_cesarean_supersedes_normal_delivery():
+    matches = match_clinical_text("Attempted vaginal delivery, converted to emergency cesarean section.")
+    codes = {m["entry"]["code"] for m in matches}
+    assert "O82" in codes
+    assert "O80" not in codes  # the delivery that actually happened was the cesarean
 
 
 # --- Full engine run ---
@@ -109,6 +195,22 @@ def test_run_coding_engine_bilingual_descriptions_present():
     pneumonia = next(c for c in result["suggested_codes"] if c["code"] == "J18.9")
     assert pneumonia["desc_ar"] == "التهاب رئوي، غير محدد المسبب"
     assert pneumonia["term_ar"] is not None
+
+
+def test_run_coding_engine_principal_override_forces_coder_choice():
+    # Sepsis would win automatically; principal_override lets a coder
+    # confirm the cough/pneumonia complaint is actually the reason for the visit.
+    note = "Patient with cough and sepsis, unspecified organism."
+    automatic = run_coding_engine(note)
+    assert automatic["principal_code"] == "A41.9"
+    overridden = run_coding_engine(note, principal_override="R05")
+    assert overridden["principal_code"] == "R05"
+    assert "A41.9" in overridden["secondary_codes"]
+
+
+def test_run_coding_engine_principal_override_ignored_when_code_not_matched():
+    result = run_coding_engine("Patient with cough.", principal_override="Z99.99")
+    assert result["principal_code"] == "R05"
 
 
 # --- Automation phase classification ---
@@ -149,6 +251,19 @@ def test_group_encounter_age_raises_rom():
     young = group_encounter("I21.9", [], age=40, encounter_type="ED")
     elderly = group_encounter("I21.9", [], age=80, encounter_type="ED")
     assert elderly["rom"] >= young["rom"]
+
+
+def test_group_encounter_poa_exclusion_drops_soi_rom_credit():
+    # A41.9 (sepsis) and N18.9 (CKD) both carry real soi/rom weight, so
+    # excluding one via poa_exclusions must lower the score versus crediting both.
+    credited = group_encounter("J18.9", ["A41.9", "N18.9"], encounter_type="INPATIENT")
+    excluded = group_encounter("J18.9", ["A41.9", "N18.9"], encounter_type="INPATIENT", poa_exclusions=["N18.9"])
+    assert excluded["soi"] <= credited["soi"]
+
+
+def test_group_encounter_poa_exclusion_appears_in_explanation():
+    drg = group_encounter("J18.9", ["N18.9"], encounter_type="INPATIENT", poa_exclusions=["N18.9"])
+    assert any("N18.9" in line and "not present on admission" in line for line in drg["explanation"]["en"])
 
 
 def test_compute_case_mix_index():
@@ -234,6 +349,39 @@ def test_lexicon_covers_broad_clinical_breadth():
     assert len(families) >= 60
     # every family referenced by the lexicon must have DRG metadata
     assert families.issubset(DRG_FAMILY_TABLE.keys())
+
+
+# --- Department dimension: the suite must route to real hospital departments, not just DRG codes ---
+def test_every_drg_family_has_a_department():
+    for code, meta in DRG_FAMILY_TABLE.items():
+        assert meta.get("department_en"), f"{code} is missing department_en"
+        assert meta.get("department_ar"), f"{code} is missing department_ar"
+
+
+def test_departments_cover_real_hospital_breadth():
+    department_names = {d["en"] for d in DEPARTMENTS}
+    assert len(department_names) >= 15
+    for expected in ("Cardiology", "Emergency Medicine", "Pediatrics", "Obstetrics & Gynecology", "Psychiatry"):
+        assert expected in department_names
+
+
+def test_group_encounter_returns_department():
+    drg = group_encounter("I21.9", [], encounter_type="ED")  # acute MI
+    assert drg["department_en"] == "Cardiology"
+    assert drg["department_ar"]
+
+
+def test_compute_department_distribution_aggregates_case_mix_per_department():
+    results = [
+        group_encounter("I21.9", [], encounter_type="ED"),  # Cardiology
+        group_encounter("I10", [], encounter_type="OUTPATIENT"),  # Cardiology
+        group_encounter("K37", [], encounter_type="ED"),  # General Surgery
+    ]
+    distribution = compute_department_distribution(results)
+    by_name = {row["department_en"]: row for row in distribution}
+    assert by_name["Cardiology"]["encounter_count"] == 2
+    assert by_name["General Surgery"]["encounter_count"] == 1
+    assert by_name["Cardiology"]["case_mix_index"] > 0
 
 
 @pytest.mark.parametrize(
@@ -333,6 +481,23 @@ def test_half_up_rounding_matches_javascript_math_round(principal_code, expected
     assert drg["soi"] >= expected_soi_at_least
 
 
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (0.125, 0.13),  # Python's round(0.125, 2) == 0.12 (banker's rounding)
+        (0.615, 0.62),  # Python's round(0.615, 2) == 0.61
+        (0.845, 0.85),  # Python's round(0.845, 2) == 0.84
+    ],
+)
+def test_confidence_rounding_uses_half_up_not_bankers_rounding(value, expected):
+    # coding_engine.py previously used Python's built-in round(x, 2) for
+    # suggested-code confidence and confidence_score, which can diverge from
+    # the TS engine's Math.round(x * 100) / 100 half-up semantics near .5
+    # boundaries and shift automation-phase classification at the threshold.
+    assert round_half_up_2dp(value) == expected
+    assert round_half_up_2dp(value) != round(value, 2) or round(value, 2) == expected
+
+
 # --- Procedure lexicon & Medical/Surgical DRG partition ---
 def test_procedure_lexicon_has_real_breadth():
     assert len(PROCEDURE_LEXICON) >= 10
@@ -401,3 +566,62 @@ def test_coding_engine_run_coding_job_surfaces_suggested_procedures():
     )
     assert any(p["code"] == "PR-APPY" for p in result["suggested_procedures"])
     assert result["drg"]["partition"] == "Surgical"
+
+
+# --- CDI principal selection must match the coding engine's acuity ranking
+# (regression test for a reviewer-flagged bug: get_cdi_nudges/generateCdiNudges
+# used to take the first lexicon/insertion-order match as principal instead of
+# the acuity-weighted election used everywhere else, which could anchor the
+# SOI-impact baseline on the wrong diagnosis for multi-diagnosis notes). ---
+def test_cdi_nudge_baseline_uses_elected_principal_not_first_match():
+    # Pneumonia (J18.9) appears earlier than myocardial infarction (I21.9) in
+    # the lexicon's insertion order, but MI is the higher-acuity diagnosis
+    # (soi_weight=3, rom_weight=3 vs. pneumonia's 2/2) and must be elected
+    # principal — this is exactly the scenario the reviewer flagged. The
+    # real-world stakes: principal selection drives which DRG *family* (and
+    # therefore which reimbursement weight) the encounter groups into.
+    note = "Patient has pneumonia and myocardial infarction."
+    matches = match_clinical_text(note)
+    assert [m["entry"]["code"] for m in matches] == ["J18.9", "I21.9"]  # raw/insertion order
+    ranked = elect_principal(matches)
+    assert ranked[0]["entry"]["code"] == "I21.9"  # elected principal is the higher-acuity MI
+    correct_baseline = group_encounter("I21.9", ["J18.9"], encounter_type="INPATIENT")
+    buggy_baseline = group_encounter("J18.9", ["I21.9"], encounter_type="INPATIENT")  # what matches[0]-as-principal would give
+    assert correct_baseline["code"] == "190"  # Acute Myocardial Infarction family
+    assert buggy_baseline["code"] == "194"  # wrong family if pneumonia were mistakenly used as principal
+    nudges = get_cdi_nudges(note, encounter_id="e10")
+    assert any(n.id.startswith("I21.9_mi_type") for n in nudges)  # nudge is keyed on the correct (MI) principal
+
+
+def test_elect_principal_matches_coding_engine_ranking():
+    note = "Patient has pneumonia and myocardial infarction."
+    matches = match_clinical_text(note)
+    engine_result = run_coding_engine(note)
+    assert elect_principal(matches)[0]["entry"]["code"] == engine_result["principal_code"]
+
+
+# --- encounter_type must be validated, not silently mis-grouped
+# (regression test for a reviewer-flagged bug: a mis-cased or misspelled
+# encounter_type used to pass through unchecked and silently fall back to
+# APR-DRG methodology instead of EAPG). ---
+def test_analyze_request_rejects_invalid_encounter_type():
+    with pytest.raises(ValidationError):
+        AnalyzeRequest(clinical_note="test note", encounter_type="outpatient")  # wrong case
+
+
+def test_analyze_request_accepts_valid_encounter_type():
+    req = AnalyzeRequest(clinical_note="test note", encounter_type="OUTPATIENT")
+    assert req.encounter_type == "OUTPATIENT"
+
+
+# --- age must be a plausible human age, not silently folded into ROM math ---
+@pytest.mark.parametrize("bad_age", [-5, -0.5, 121, 1000])
+def test_analyze_request_rejects_implausible_age(bad_age):
+    with pytest.raises(ValidationError):
+        AnalyzeRequest(clinical_note="test note", age=bad_age)
+
+
+@pytest.mark.parametrize("good_age", [0, 1, 65, 120])
+def test_analyze_request_accepts_plausible_age(good_age):
+    req = AnalyzeRequest(clinical_note="test note", age=good_age)
+    assert req.age == good_age
